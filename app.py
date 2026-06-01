@@ -2,6 +2,7 @@ import os
 from flask import Flask, request, jsonify, send_from_directory
 from dotenv import load_dotenv
 import google.generativeai as genai
+import pdfplumber
 
 load_dotenv()
 
@@ -197,6 +198,30 @@ def get_gemini_model():
 @app.route("/")
 def index():
     return send_from_directory(".", "index.html")
+
+
+@app.route("/extract-pdf", methods=["POST"])
+def extract_pdf():
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+    
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "No file selected"}), 400
+    
+    if not file.filename.lower().endswith(".pdf"):
+        return jsonify({"error": "Invalid file type. Please upload a PDF."}), 400
+    
+    try:
+        text = ""
+        with pdfplumber.open(file) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
+        return jsonify({"text": text.strip()})
+    except Exception as e:
+        return jsonify({"error": f"Failed to extract PDF: {str(e)}"}), 500
 
 
 @app.route("/analyze", methods=["POST"])

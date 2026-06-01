@@ -110,13 +110,16 @@
 
     #pdfBtn {
       background: transparent;
-      color: var(--muted);
+      color: var(--text);
       border: 1px solid var(--border);
       padding: 10px 20px;
-      cursor: not-allowed;
+      cursor: pointer;
       font-family: 'Fira Code', monospace;
       font-size: 0.8rem;
     }
+
+    #pdfBtn:hover:not(:disabled) { border-color: #333; }
+    #pdfBtn:disabled { opacity: 0.45; cursor: not-allowed; color: var(--muted); }
 
     .loader {
       display: none;
@@ -304,7 +307,8 @@
       ></textarea>
       <div class="btn-row">
         <button id="analyzeBtn" onclick="analyze()">Analyse</button>
-        <button id="pdfBtn" disabled title="Coming soon">Upload PDF — Coming Soon</button>
+        <button id="pdfBtn">Upload PDF</button>
+        <input type="file" id="pdfInput" accept="application/pdf" style="display: none;" />
         <div class="loader" id="loader">
           <div class="dots">
             <span></span><span></span><span></span>
@@ -323,6 +327,7 @@
     async function analyze() {
       const input = document.getElementById('problemInput');
       const btn = document.getElementById('analyzeBtn');
+      const pdfBtn = document.getElementById('pdfBtn');
       const loader = document.getElementById('loader');
       const output = document.getElementById('output');
 
@@ -333,6 +338,7 @@
       btn.disabled = true;
       btn.textContent = 'Analysing...';
       input.disabled = true;
+      if (pdfBtn) pdfBtn.disabled = true;
       loader.classList.add('active');
       output.style.display = 'none';
       output.innerHTML = '';
@@ -366,6 +372,7 @@
         btn.disabled = false;
         btn.textContent = 'Analyse';
         input.disabled = false;
+        if (pdfBtn) pdfBtn.disabled = false;
         loader.classList.remove('active');
       }
     }
@@ -417,6 +424,53 @@
       };
 
       section.appendChild(btn);
+    }
+
+    // PDF Upload logic
+    const pdfBtn = document.getElementById('pdfBtn');
+    const pdfInput = document.getElementById('pdfInput');
+
+    if (pdfBtn && pdfInput) {
+      pdfBtn.onclick = () => {
+        pdfInput.click();
+      };
+
+      pdfInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const input = document.getElementById('problemInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        
+        pdfBtn.disabled = true;
+        pdfBtn.textContent = 'Extracting...';
+        if (analyzeBtn) analyzeBtn.disabled = true;
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+          const res = await fetch('/extract-pdf', {
+            method: 'POST',
+            body: formData
+          });
+          
+          const data = await res.json();
+          
+          if (!res.ok || data.error) {
+            alert(`Error: ${data.error || 'Unknown error'}`);
+          } else {
+            input.value = data.text;
+          }
+        } catch (err) {
+          alert(`Error uploading file: ${err.message}`);
+        } finally {
+          pdfBtn.disabled = false;
+          pdfBtn.textContent = 'Upload PDF';
+          pdfInput.value = ''; // reset
+          if (analyzeBtn) analyzeBtn.disabled = false;
+        }
+      };
     }
 
     // Allow Ctrl+Enter / Cmd+Enter to submit
