@@ -186,7 +186,7 @@ def get_gemini_model():
         raise ValueError("GEMINI_API_KEY not set in environment")
     genai.configure(api_key=api_key)
     return genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
+        model_name="gemini-2.5-flash",
         generation_config=genai.types.GenerationConfig(
             temperature=0.3,
             max_output_tokens=8192,
