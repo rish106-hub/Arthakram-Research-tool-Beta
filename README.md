@@ -1,118 +1,146 @@
-# Case comp. Research Tool - BETA 
+<div align="center">
 
-> Paste your case competition problem statement. Get a first-principles research brief, a ready-to-copy Perplexity prompt, and targeted research angles — in seconds.
+# ⚡ Arthakram Research Tool
 
----
+**First-principles research briefs for case competitions — powered by Gemini 2.5 Flash**
 
-## What It Does
+[![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-3.x-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
+[![Gemini](https://img.shields.io/badge/Gemini-2.5%20Flash-4285F4?style=flat-square&logo=google&logoColor=white)](https://aistudio.google.com)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa?style=flat-square)](CODE_OF_CONDUCT.md)
 
-Case competition teams waste time on broad, generic research. Arthakram forces specificity from the start.
+[**🚀 Try It**](#setup) · [**🐛 Report a Bug**](../../issues/new?template=bug_report.yml) · [**✨ Request a Feature**](../../issues/new?template=feature_request.yml) · [**📖 Contributing Guide**](CONTRIBUTING.md)
 
-Paste a problem statement → the tool runs it through a 7-step first-principles framework powered by Gemini 2.5 Flash → returns a structured research brief with:
-
-- **Core Problem** — stripped to one sentence with impact analysis
-- **First Principles Findings** — assumption inventory, conventional wisdom audit, riskiest bet identification
-- **Business Anatomy** — stakeholder map, constraints, success definition, scope
-- **Derived Research Questions** — specific, falsifiable questions a competitor team will miss
-- **Perplexity Prompt** — a ready-to-copy research brief structured for niche-level insight
-- **Research Angles** — 10–12 questions tagged by type (Market / Customer / Financial / Strategic / Operational / Risk)
-- **Working Hypotheses** — 3 testable claims with explicit falsifiability conditions
+</div>
 
 ---
 
-## Tech Stack
+## 📋 What Is This?
+
+Case competition teams waste time on broad, generic research. **Arthakram** forces specificity from the start.
+
+Paste a problem statement → the tool runs it through a **7-step first-principles framework** powered by Gemini 2.5 Flash → returns a structured research brief with:
+
+| Output | Description |
+|--------|-------------|
+| **Core Problem** | Stripped to one sentence with who/why/impact |
+| **First Principles Findings** | Assumption inventory, conventional wisdom audit, riskiest bet |
+| **Business Anatomy** | Stakeholder map, constraints, success definition, scope |
+| **Derived Research Questions** | Specific, falsifiable questions a competitor team will miss |
+| **Perplexity Prompt** | Ready-to-copy research brief for niche-level search |
+| **Research Angles** | 10–12 questions tagged [MARKET] [CUSTOMER] [FINANCIAL] [STRATEGIC] [OPERATIONAL] [RISK] |
+| **Working Hypotheses** | 3 testable claims: "We believe X because Y. This would be false if Z." |
+
+---
+
+## 🧱 Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Python, Flask |
+| Backend | Python 3, Flask |
 | AI | Google Gemini 2.5 Flash (`gemini-2.5-flash`) |
 | Frontend | Plain HTML, CSS, Vanilla JavaScript |
 | Markdown rendering | marked.js (CDN) |
 | Fonts | Syne, DM Sans, Fira Code (Google Fonts CDN) |
 | PDF parsing (Phase 2) | pdfplumber |
 
----
-
-## Project Structure
-
-```
-case-comp-tool/
-├── app.py              # Flask backend — routes, Gemini integration, system prompt
-├── index.html          # Single-page frontend — UI, markdown rendering, copy logic
-├── requirements.txt    # Python dependencies
-├── .env                # API key (not committed)
-└── README.md
-```
+No database. No auth. No frontend framework. Deliberately minimal.
 
 ---
 
-## Setup
+## 📁 Project Structure
 
-**1. Install dependencies**
+```
+Arthakram-Research-tool-Beta/
+├── app.py                    # Flask backend — routes, Gemini integration, system prompt
+├── index.html                # Single-page frontend — UI, markdown rendering, copy logic
+├── requirements.txt          # Python dependencies
+├── .env                      # API key (not committed — see .gitignore)
+├── README.md
+├── CONTRIBUTING.md           # Contribution guide
+├── CODE_OF_CONDUCT.md        # Community standards
+├── CHANGELOG.md              # Version history
+└── .github/
+    ├── PULL_REQUEST_TEMPLATE.md
+    └── ISSUE_TEMPLATE/
+        ├── bug_report.yml
+        ├── feature_request.yml
+        └── config.yml
+```
+
+---
+
+## 🔨 Setup
+
+### Prerequisites
+
+- Python 3.8+
+- A free Gemini API key from [aistudio.google.com](https://aistudio.google.com)
+
+### Installation
+
 ```bash
+# 1. Clone the repo
+git clone https://github.com/rish106-hub/Arthakram-Research-tool-Beta.git
+cd Arthakram-Research-tool-Beta
+
+# 2. Create a virtual environment (recommended)
+python -m venv .venv
+source .venv/bin/activate      # macOS/Linux
+# .venv\Scripts\activate       # Windows
+
+# 3. Install dependencies
 pip install -r requirements.txt
-```
 
-**2. Create `.env` file**
-```
-GEMINI_API_KEY=your_key_here
-```
+# 4. Set your API key
+echo "GEMINI_API_KEY=your_key_here" > .env
 
-Get a key at [aistudio.google.com](https://aistudio.google.com).
-
-**3. Run the server**
-```bash
+# 5. Start the server
 python app.py
 ```
 
-**4. Open in browser**
-```
-http://localhost:5000
-```
+Then open [http://localhost:5000](http://localhost:5000) in your browser.
+
+> **Security:** Never commit `.env`. It is already in `.gitignore` (add it if not present). The API key stays server-side and is never exposed to the frontend.
 
 ---
 
-## Usage
+## 📱 Usage
 
 1. Paste a case competition problem statement into the textarea
-2. Click **Analyse** (or press `Ctrl+Enter` / `Cmd+Enter`)
+2. Click **Analyse** (or press `Ctrl`+`Enter` / `Cmd`+`Enter`)
 3. Wait ~15–30 seconds for Gemini to process
 4. Read through the structured research brief
-5. Click **Copy Prompt** on the Perplexity Prompt section to copy it directly to clipboard
+5. Click **Copy Prompt** on the Perplexity Prompt section
 6. Paste into [Perplexity](https://perplexity.ai) and run
 
 ---
 
-## API Reference
+## 🌐 API Reference
 
 ### `GET /`
-Serves `index.html`.
 
----
+Serves `index.html`.
 
 ### `POST /analyze`
 
 Accepts a problem statement, returns a structured markdown research brief.
 
-**Request**
+**Request body:**
 ```json
-{
-  "problem": "string (required)"
-}
+{ "problem": "string (required)" }
 ```
 
-**Response — success**
+**Success response:**
 ```json
-{
-  "result": "string (markdown)"
-}
+{ "result": "string (markdown)" }
 ```
 
-**Response — error**
+**Error response:**
 ```json
-{
-  "error": "string"
-}
+{ "error": "string" }
 ```
 
 | Status | Condition |
@@ -123,37 +151,25 @@ Accepts a problem statement, returns a structured markdown research brief.
 
 ---
 
-## The 7-Step Research Framework
+## 🧠 The 7-Step Research Framework
 
 The system prompt embeds an elite case competition methodology. Gemini processes every problem in strict sequence:
 
 | Step | Name | Output |
 |------|------|--------|
-| 1 | Strip the Problem to Its Core | One-sentence problem statement + who/why/impact |
-| 2 | First Principles Deconstruction | Atomic value question, assumption inventory, conventional wisdom audit, inversion, riskiest bet, from-scratch reconstruction |
-| 3 | Business Anatomy | Company identity, problem classification, stakeholder map, constraints, success definition, scope |
-| 4 | Derived Research Questions | Specific, falsifiable questions traceable to core problem — not generic frameworks |
-| 5 | Perplexity Prompt Generation | Structured search brief: competitive intelligence, customer intelligence, channel/distribution, financials, failure patterns, assumption-breaking evidence, unconventional wins, riskiest bet validation, trend signals, operational benchmarks |
-| 6 | Research Angles | 10–12 critical questions tagged [MARKET] [CUSTOMER] [FINANCIAL] [STRATEGIC] [OPERATIONAL] [RISK] |
+| 1 | Strip the Problem to Its Core | One-sentence problem + who/why/impact |
+| 2 | First Principles Deconstruction | Atomic value question, assumption inventory, conventional wisdom audit, inversion, riskiest bet |
+| 3 | Business Anatomy | Company identity, stakeholder map, constraints, success definition, scope |
+| 4 | Derived Research Questions | Specific, falsifiable questions traceable to core problem |
+| 5 | Perplexity Prompt Generation | Structured search brief across 10 research dimensions |
+| 6 | Research Angles | 10–12 critical questions tagged by type |
 | 7 | Working Hypotheses | 3 claims: "We believe X because Y. This would be false if Z." |
 
-**Gemini configuration:** temperature `0.3`, max output tokens `8192`.
+Gemini configuration: `temperature: 0.3`, `max_output_tokens: 8192`
 
 ---
 
-## Frontend Features
-
-- **Dark UI** — `#080808` background, minimal chrome, max-width 720px
-- **Loading state** — animated pulsing dots, button + textarea disabled during request
-- **Markdown rendering** — marked.js with custom styles per section
-- **Perplexity Prompt section** — visually isolated with `#0a0f1a` background and monospace font
-- **Copy button** — one click copies only the Perplexity Prompt content; changes to "Copied" for 2 seconds
-- **Keyboard shortcut** — `Ctrl+Enter` / `Cmd+Enter` submits
-- **Error display** — inline, styled, no page reload
-
----
-
-## Design System
+## 🎨 Design System
 
 ### Colours
 
@@ -172,30 +188,18 @@ The system prompt embeds an elite case competition methodology. Gemini processes
 
 | Font | Role |
 |------|------|
-| [Syne](https://fonts.google.com/specimen/Syne) | Headings |
-| [DM Sans](https://fonts.google.com/specimen/DM+Sans) | Body, UI labels |
-| [Fira Code](https://fonts.google.com/specimen/Fira+Code) | Section labels, Perplexity Prompt content, code blocks |
+| Syne | Headings |
+| DM Sans | Body, UI labels |
+| Fira Code | Section labels, Perplexity Prompt content, code blocks |
 
 ---
 
-## Environment Variables
+## 🗺️ Roadmap
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GEMINI_API_KEY` | Yes | Google Generative AI API key |
-
-Never commit `.env`. Add it to `.gitignore` if not already present.
-
----
-
-## Roadmap
-
-### Phase 2 — PDF Upload
-Upload a PDF case brief instead of pasting text.
-
-- Frontend: Enable the **Upload PDF** button (currently disabled, labelled *Coming Soon*)
-- Backend: New `POST /analyze-pdf` route — extract text with `pdfplumber`, feed into same system prompt
-- Dependency: `pdfplumber` (already in `requirements.txt`)
+### Phase 2 — PDF Upload *(in progress)*
+- Upload a PDF case brief instead of pasting text
+- `POST /analyze-pdf` route extracting text with `pdfplumber`
+- Frontend: enable the disabled "Upload PDF" button
 
 ### Potential future additions
 - Research history (local storage or SQLite)
@@ -204,11 +208,63 @@ Upload a PDF case brief instead of pasting text.
 - Rate limiting on `/analyze`
 - Response caching for identical inputs
 
+Track progress in [CHANGELOG.md](CHANGELOG.md) and [open issues](../../issues).
+
 ---
 
-## Notes
+## 🤝 Contributing
 
-- Fully stateless — no database, no sessions, no auth
-- API key stays server-side — never exposed to frontend
-- All logic runs locally; no external services beyond Gemini API
-- Debug mode is on by default (`app.run(debug=True)`) — disable for any shared/production use
+We welcome contributions of all sizes — bug fixes, new features, documentation improvements, and UX enhancements.
+
+**Quick start:**
+
+```bash
+# Fork the repo, then:
+git clone https://github.com/YOUR_USERNAME/Arthakram-Research-tool-Beta.git
+git checkout -b feat/your-feature-name
+# ... make your changes ...
+git push origin feat/your-feature-name
+# Open a PR using the PR template
+```
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide covering:
+- Branching strategy and naming conventions
+- Commit message convention (Conventional Commits)
+- PR process and review criteria
+- Code style guidelines for Python and HTML/JS
+- Conflict resolution workflow
+
+> All contributors must follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+---
+
+## 📄 Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GEMINI_API_KEY` | Yes | Google Generative AI API key |
+
+---
+
+## ⚠️ Important Notes
+
+- **Fully stateless** — no database, no sessions, no auth
+- **API key stays server-side** — never exposed to frontend
+- **All logic runs locally** — no external services beyond Gemini API
+- **Debug mode is on by default** (`app.run(debug=True)`) — disable for any shared/production use
+
+---
+
+## 📃 License
+
+This project is open source under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+
+Built with ♥️ by [rish106-hub](https://github.com/rish106-hub) and contributors.
+
+**[Star ⭐ this repo](https://github.com/rish106-hub/Arthakram-Research-tool-Beta) if it helped you win a case comp.**
+
+</div>
