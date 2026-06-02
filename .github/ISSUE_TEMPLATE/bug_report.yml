@@ -1,0 +1,105 @@
+name: "🐛 Bug Report"
+description: Something is broken or behaving unexpectedly
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out this form as completely as possible.
+        The more detail you provide, the faster we can fix it.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: "🧹 Pre-flight Checklist"
+      description: Please confirm before submitting.
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+        - label: I am running the latest version (pulled from `main`)
+          required: true
+        - label: I have read the README setup instructions
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "📋 Bug Description"
+      description: A clear and concise description of what the bug is.
+      placeholder: "Describe the bug here..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "🔄 Steps to Reproduce"
+      description: Exact steps to reproduce the behaviour.
+      placeholder: |
+        1. Go to ...
+        2. Enter this problem statement: '...'
+        3. Click 'Analyse'
+        4. See error / unexpected output
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "✅ Expected Behaviour"
+      description: What did you expect to happen?
+      placeholder: "Describe what you expected..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: "❌ Actual Behaviour"
+      description: What actually happened? Include any error messages.
+      placeholder: "Describe what actually happened..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: "📸 Screenshots / Logs"
+      description: If applicable, add screenshots or paste terminal/console output.
+      placeholder: "Paste screenshots or logs here..."
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: "🎯 Affected Area"
+      description: Which part of the application is affected?
+      options:
+        - Backend / Flask (app.py)
+        - Frontend / UI (index.html)
+        - Gemini API / AI output
+        - Setup / Installation
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: "💻 Environment"
+      description: Fill in your environment details.
+      value: |
+        - OS: [e.g. macOS 14, Ubuntu 22.04, Windows 11]
+        - Python version: [e.g. 3.11]
+        - Browser (for frontend issues): [e.g. Chrome 124]
+        - Gemini API key region: [e.g. US, EU]
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: "💬 Additional Context"
+      description: Anything else that might be relevant?
