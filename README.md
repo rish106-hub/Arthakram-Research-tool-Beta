@@ -8,7 +8,7 @@
 
 Case competition teams waste time on broad, generic research. Arthakram forces specificity from the start.
 
-Paste a problem statement → the tool runs it through a 7-step first-principles framework powered by Gemini 2.0 Flash → returns a structured research brief with:
+Paste a problem statement → the tool runs it through a 7-step first-principles framework powered by Gemini 2.5 Flash → returns a structured research brief with:
 
 - **Core Problem** — stripped to one sentence with impact analysis
 - **First Principles Findings** — assumption inventory, conventional wisdom audit, riskiest bet identification
