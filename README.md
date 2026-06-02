@@ -263,7 +263,7 @@ This project is open source under the [MIT License](LICENSE).
 
 <div align="center">
 
-Built with ♥️ by [rish106-hub](https://github.com/rish106-hub) and contributors.
+Built with ♥️ by [Rishav Dewan](https://github.com/rish106-hub) and [Aadi Kalra](https://github.com/RedRangerWentWild).
 
 **[Star ⭐ this repo](https://github.com/rish106-hub/Arthakram-Research-tool-Beta) if it helped you win a case comp.**
 
