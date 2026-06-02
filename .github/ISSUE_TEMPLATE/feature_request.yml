@@ -1,0 +1,89 @@
+name: "✨ Feature Request"
+description: Suggest a new feature or improvement for Arthakram
+title: "[FEATURE] "
+labels: ["enhancement", "feature"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Got an idea to make Arthakram better? Awesome 🚀
+        Please fill out this form so we can understand your proposal clearly.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: "🧹 Pre-flight Checklist"
+      options:
+        - label: I have searched existing issues/PRs and this has not been proposed before
+          required: true
+        - label: This feature is within the scope of the project (research tool for case competitions)
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "💡 Problem / Motivation"
+      description: What problem does this feature solve? Why is it needed?
+      placeholder: "I find it frustrating when... / There is no way to currently..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: "🔧 Proposed Solution"
+      description: Describe what you want to happen. Be as specific as possible.
+      placeholder: "I would like a feature that..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "🔄 Alternatives Considered"
+      description: Have you considered other approaches? Why is your proposal better?
+      placeholder: "I considered... but it doesn't work because..."
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: "🎯 Feature Area"
+      description: Which part of the application would this feature affect?
+      multiple: true
+      options:
+        - Backend / Flask API
+        - Frontend / UI & UX
+        - Gemini AI prompt / output
+        - PDF upload (Phase 2)
+        - Research output quality
+        - Performance / Speed
+        - Developer Experience / DX
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "📊 Priority (from your perspective)"
+      options:
+        - Low — nice to have
+        - Medium — would meaningfully improve my workflow
+        - High — blocking me or very commonly needed
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: "🤝 Contribution"
+      options:
+        - label: I am willing to implement this feature and raise a PR
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: "💬 Additional Context"
+      description: Mockups, examples from other tools, or any other relevant info.
