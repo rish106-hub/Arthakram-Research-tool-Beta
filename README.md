@@ -25,7 +25,7 @@ Paste a problem statement → the tool runs it through a 7-step first-principles
 | Layer | Technology |
 |-------|-----------|
 | Backend | Python, Flask |
-| AI | Google Gemini 2.0 Flash (`gemini-2.0-flash`) |
+| AI | Google Gemini 2.5 Flash (`gemini-2.5-flash`) |
 | Frontend | Plain HTML, CSS, Vanilla JavaScript |
 | Markdown rendering | marked.js (CDN) |
 | Fonts | Syne, DM Sans, Fira Code (Google Fonts CDN) |
