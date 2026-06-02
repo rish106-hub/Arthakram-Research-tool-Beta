@@ -1,4 +1,4 @@
-# Arthakram Research Tool
+# Case comp. Research Tool - BETA 
 
 > Paste your case competition problem statement. Get a first-principles research brief, a ready-to-copy Perplexity prompt, and targeted research angles — in seconds.
 
