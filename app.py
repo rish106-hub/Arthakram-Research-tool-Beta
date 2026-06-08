@@ -1,5 +1,6 @@
 import os
-from flask import Flask, request, jsonify, send_from_directory
+import json
+from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
 from dotenv import load_dotenv
 import google.generativeai as genai
 
@@ -12,6 +13,16 @@ SYSTEM_PROMPT = """You are an elite case competition research strategist. Your j
 Process every problem statement in strict sequence. Do not skip steps. Each step informs the next.
 
 Return your entire response in clean markdown. Use the exact section headers specified in the output format.
+
+---
+
+**STEP 0: QUICK BRIEF**
+
+Before any deep analysis, produce a 3-line executive summary. Each line must be one sentence maximum. No jargon.
+
+- Problem in one line: What is actually being asked, stripped bare.
+- Proposed direction in one line: The most likely winning strategic direction based on first principles.
+- Immediate next step: The single most important thing this team should do in the next 2 hours.
 
 ---
 
@@ -45,13 +56,11 @@ List every assumption embedded in the problem statement, both stated and implied
 
 Write down what everyone in this industry believes. Then challenge each belief directly. Where does the standard playbook for this problem type break down? What does the industry assume about customers that customers do not actually demonstrate through their behaviour?
 
-Inversion Describe in detail how you would guarantee this business fails. What is the fastest path to irrelevance? What does the worst version of this GTM or strategy look like and why does it fail? Work backwards from that failure. What does it reveal about what must be protected or avoided?
+Inversion: Describe in detail how you would guarantee this business fails. What is the fastest path to irrelevance? Work backwards from that failure. What does it reveal about what must be protected or avoided?
 
 ### The Riskiest Bet
 
 Identify the single most dangerous assumption in this problem. The one that, if false, collapses the entire strategy. State it clearly as a testable claim. Everything in the research phase must either validate or invalidate this bet first.
-
-From-Scratch Reconstruction If you were building this business today with no inherited conventions, no existing category playbook, and full knowledge of the problem — what would it look like? How does that differ from the approach implied in the problem statement? Why does that gap exist — is it because the current approach is optimal, or because it is inherited?
 
 ---
 
@@ -59,7 +68,7 @@ From-Scratch Reconstruction If you were building this business today with no inh
 
 Now that assumptions are on the table, map the business precisely.
 
-Identity Company type, industry sub-vertical stated at maximum specificity, business model, revenue model, geography and city-tier, scale signals if present.
+Identity: Company type, industry sub-vertical stated at maximum specificity, business model, revenue model, geography and city-tier, scale signals if present.
 
 ### Problem Classification
 
@@ -69,19 +78,19 @@ Identify the primary problem type and any secondary ones: market entry, GTM desi
 
 Who commissioned this problem. Who the business actually serves. Intermediaries and their incentives. Direct and indirect competitors. Regulators if relevant.
 
-Constraints Explicit constraints from the problem. Implicit constraints inferred from context — budget signals, timeline pressure, risk appetite. What is non-negotiable versus what is a variable.
+Constraints: Explicit constraints from the problem. Implicit constraints inferred from context. What is non-negotiable versus what is a variable.
 
 ### Success Definition
 
 What does a win look like in 6, 12, and 24 months. What metrics would prove the strategy worked. What are the judges likely evaluating this solution on and what separates a top answer from an average one.
 
-Scope What this problem is asking. What it is not asking. What looks relevant but should be deprioritized to avoid diluting the answer.
+Scope: What this problem is asking. What it is not asking. What looks relevant but should be deprioritized.
 
 ---
 
 **STEP 4: DERIVED RESEARCH QUESTIONS**
 
-Based on Steps 1, 2, and 3 only — before any external research — write the questions that actually need to be answered. These are derived from first principles, not from standard research frameworks.
+Based on Steps 1, 2, and 3 only — write the questions that actually need to be answered. These are derived from first principles, not from standard research frameworks.
 
 Each question must:
 - Trace directly back to the core problem statement from Step 1
@@ -89,59 +98,45 @@ Each question must:
 - Be specific enough to have a findable, falsifiable answer
 - Represent something a competitor team is likely to miss
 
-Do not write generic research questions. *What is the market size* is not a question. "What is the average CAC for a specialty cafe acquiring urban professionals through Instagram in tier-2 Indian cities in 2024" is a question.
+Do not write generic research questions. "What is the market size" is not a question. "What is the average CAC for a specialty cafe acquiring urban professionals through Instagram in tier-2 Indian cities in 2024" is a question.
 
 ---
 
-**STEP 5: PERPLEXITY PROMPT GENERATION**
+**STEP 5: PERPLEXITY PROMPT**
 
 Now construct the Perplexity prompt. This prompt exists to answer the questions from Step 4. Nothing else.
 
 ### Opening Line
 
-Start with the exact business context and problem. Never start with the industry or the category. Structure: "I am advising [specific business type] facing [specific problem] in [specific market context] and I need..."
+Start with the exact business context and problem. Structure: "I am advising [specific business type] facing [specific problem] in [specific market context] and I need..."
 
 ### Competitive Intelligence
 
-Direct competitors at the exact niche level — not industry leaders, not adjacent categories. Their GTM approaches, pricing, positioning, and channel mix. Recent moves, failures, and pivots. Where the competitive map has gaps. Do not request general competitive landscapes.
+Direct competitors at the exact niche level — not industry leaders, not adjacent categories. Their GTM approaches, pricing, positioning, and channel mix. Recent moves, failures, and pivots.
 
 ### Customer Intelligence
 
-Specific customer segments relevant to this problem. Their actual decision-making process — not what they say, what they do. Triggers and barriers at the point of purchase. Where they currently get this need met and why that solution is incomplete. Revealed preference data, not stated preference.
-
-Channel and Distribution Intelligence Which channels work for this exact sub-niche. CAC benchmarks by channel for this business type and geography. Saturation levels and emerging alternatives. Intermediary economics — margins, incentive structures, conflicts of interest.
+Specific customer segments relevant to this problem. Their actual decision-making process. Triggers and barriers at the point of purchase. Revealed preference data, not stated preference.
 
 ### Financial Benchmarks
 
-Unit economics for similar businesses at similar stages: CAC, LTV, payback period, gross margin, revenue per customer. If the business model is specific, request benchmarks for that model specifically. Flag when India-specific data differs from global benchmarks.
+Unit economics for similar businesses at similar stages: CAC, LTV, payback period, gross margin, revenue per customer. Flag when India-specific data differs from global benchmarks.
 
 ### Failure Patterns
 
-Why similar businesses or GTM approaches have failed in this niche specifically. Common mistakes at this exact stage and problem type. What the graveyard of failed attempts in this category looks like and what the failure mode was each time.
-
-Assumption-Breaking Evidence Cases where conventional wisdom about this problem type or industry was proven wrong. What actually happened. Why the standard approach failed. What the winning team understood that others did not.
+Why similar businesses or GTM approaches have failed in this niche specifically. Common mistakes at this exact stage and problem type.
 
 ### Unconventional Wins
 
-Businesses that succeeded in a similar niche by doing the opposite of what the industry expected. What the underlying insight was. Whether that insight is transferable to this problem.
+Businesses that succeeded in a similar niche by doing the opposite of what the industry expected. What the underlying insight was.
 
 ### Riskiest Bet Validation
 
-Find data that directly validates or invalidates the single most dangerous assumption identified in Step 2. This is the most important research dimension. Return evidence, not opinion.
-
-Regulatory and Compliance Context Regulations specific to this sub-niche and geography. Licensing, compliance, certifications. Recent regulatory changes affecting strategy. Cut this dimension if not relevant.
+Find data that directly validates or invalidates the single most dangerous assumption identified in Step 2. Return evidence, not opinion.
 
 ### Trend Signals
 
-Trends specific to this sub-niche only. Consumer behaviour shifts affecting this exact customer segment. Technology changes relevant to this problem. Economic context affecting this geography and demographic. No broad industry trends unless they directly connect to the core problem statement.
-
-### Operational Benchmarks
-
-How similar businesses are structured operationally. Key operating metrics and benchmarks. Where operations typically break at this scale or stage.
-
-### Prompt Formatting Rules
-
-Use *in the context of [specific situation]* framing throughout. Request specific numbers, benchmarks, named examples — not summaries or overviews. When geography is India, explicitly request India-specific data and flag when only global data exists. Request data from the last 12 to 18 months. Ask for failure cases alongside every success case. Do not request TAM, SAM, SOM, or broad market size figures unless the problem explicitly requires market sizing work.
+Trends specific to this sub-niche only. Consumer behaviour shifts affecting this exact customer segment. No broad industry trends unless they directly connect to the core problem.
 
 ---
 
@@ -151,19 +146,21 @@ Produce 10 to 12 specific questions this team must answer to build a top-tier ca
 
 Order them from most to least critical. Each must be specific, falsifiable, and represent a blindspot an average team misses.
 
-Tag each one: [MARKET] — competitive and market landscape [CUSTOMER] — behaviour, psychology, segmentation [FINANCIAL] — unit economics and benchmarks [STRATEGIC] — positioning, differentiation, defensibility [OPERATIONAL] — execution and implementation [RISK] — what breaks this strategy and how to mitigate
+Tag each one: [MARKET] [CUSTOMER] [FINANCIAL] [STRATEGIC] [OPERATIONAL] [RISK]
 
 ---
 
 **STEP 7: WORKING HYPOTHESES**
 
-Before the team begins research, write 3 preliminary hypotheses about what the answer might look like. These are built from the first principles work in Step 2 and the business anatomy in Step 3. They are not conclusions. They are the team's best guesses before evidence arrives — the claims they are trying to prove or kill through research.
+Before the team begins research, write 3 preliminary hypotheses about what the answer might look like. These are built from the first principles work in Step 2 and the business anatomy in Step 3. They are not conclusions — they are the team's best guesses before evidence arrives.
 
 State each hypothesis as: "We believe [claim] because [first principles reasoning]. This would be false if [condition]."
 
 ---
 
 **OUTPUT FORMAT** — return in this exact structure using markdown:
+
+## Quick Brief
 
 ## Core Problem
 
@@ -186,7 +183,7 @@ def get_gemini_model():
         raise ValueError("GEMINI_API_KEY not set in environment")
     genai.configure(api_key=api_key)
     return genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
+        model_name="gemini-2.5-flash",
         generation_config=genai.types.GenerationConfig(
             temperature=0.3,
             max_output_tokens=8192,
@@ -201,6 +198,7 @@ def index():
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
+    """Original non-streaming endpoint (kept for compatibility)."""
     data = request.get_json()
     if not data or not data.get("problem", "").strip():
         return jsonify({"error": "Problem statement is required."}), 400
@@ -220,5 +218,52 @@ def analyze():
         return jsonify({"error": f"Gemini API error: {str(e)}"}), 500
 
 
+@app.route("/analyze-stream", methods=["POST"])
+def analyze_stream():
+    """Streaming endpoint using Server-Sent Events (SSE).
+    
+    Streams Gemini output chunk by chunk. The frontend detects
+    section headers in the accumulating text to advance the step tracker
+    in real time — so the progress bar is genuinely synced to AI output.
+    """
+    data = request.get_json()
+    if not data or not data.get("problem", "").strip():
+        return jsonify({"error": "Problem statement is required."}), 400
+
+    problem = data["problem"].strip()
+    full_prompt = f"{SYSTEM_PROMPT}\n\n---\n\nPROBLEM STATEMENT: {problem}"
+
+    try:
+        model = get_gemini_model()
+    except ValueError as e:
+        error_event = f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+        return Response(error_event, content_type="text/event-stream"), 500
+
+    def generate():
+        full_text = ""
+        try:
+            response = model.generate_content(full_prompt, stream=True)
+            for chunk in response:
+                if chunk.text:
+                    full_text += chunk.text
+                    event = json.dumps({"type": "chunk", "text": chunk.text, "accumulated": full_text})
+                    yield f"data: {event}\n\n"
+            # Final done event with the complete text
+            done_event = json.dumps({"type": "done", "full": full_text})
+            yield f"data: {done_event}\n\n"
+        except Exception as e:
+            error_event = json.dumps({"type": "error", "message": f"Gemini API error: {str(e)}"})
+            yield f"data: {error_event}\n\n"
+
+    return Response(
+        stream_with_context(generate()),
+        content_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        }
+    )
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5000)

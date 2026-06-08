@@ -3,200 +3,912 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Case Research Tool</title>
+  <title>Arthakram — Research Tool for Case Competitions</title>
+  <meta name="description" content="Arthakram by Rishihood University's consulting club. Paste your case competition problem statement and get a structured, first-principles research brief in 30 seconds." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --bg: #080808;
-      --text: #e8e8e8;
-      --card: #111111;
+      --surface: #111111;
+      --surface2: #161616;
       --border: #1e1e1e;
-      --accent: #f0f0f0;
-      --muted: #555;
+      --border2: #2a2a2a;
+      --text: #e8e8e8;
+      --text-muted: #888;
+      --text-dim: #555;
+      --orange: #F97316;
+      --orange-light: #FB923C;
+      --orange-dim: rgba(249, 115, 22, 0.12);
+      --orange-glow: rgba(249, 115, 22, 0.25);
+      --white: #FFFFFF;
       --prompt-bg: #0a0f1a;
       --prompt-border: #1a2a3a;
     }
+
+    html { scroll-behavior: smooth; }
 
     body {
       background: var(--bg);
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
       min-height: 100vh;
-      padding: 48px 24px 80px;
+      overflow-x: hidden;
     }
 
-    .container {
-      max-width: 720px;
-      margin: 0 auto;
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--orange-dim); }
+
+    /* ═══════════════════════════════════════════
+       NAVIGATION
+    ═══════════════════════════════════════════ */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(8, 8, 8, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(30, 30, 30, 0.5);
+      transition: all 0.3s ease;
     }
 
-    header {
-      margin-bottom: 40px;
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
     }
 
-    header h1 {
+    .nav-logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--orange), #ea580c);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-family: 'Syne', sans-serif;
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: var(--accent);
+      font-weight: 800;
+      font-size: 14px;
+      color: white;
+      letter-spacing: -0.5px;
+      flex-shrink: 0;
     }
 
-    header p {
-      margin-top: 6px;
+    .nav-logo-text {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--white);
+      letter-spacing: -0.02em;
+    }
+
+    .nav-badge {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.68rem;
+      color: var(--orange);
+      background: var(--orange-dim);
+      border: 1px solid rgba(249, 115, 22, 0.25);
+      padding: 3px 10px;
+      border-radius: 100px;
+      letter-spacing: 0.04em;
+    }
+
+    .nav-cta {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--bg);
+      background: var(--orange);
+      border: none;
+      padding: 8px 22px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .nav-cta:hover { background: var(--orange-light); transform: translateY(-1px); }
+
+    /* ═══════════════════════════════════════════
+       BACKGROUND ORBS
+    ═══════════════════════════════════════════ */
+    .bg-orbs {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0;
+      animation: orbFloat 8s ease-in-out infinite;
+    }
+
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(249,115,22,0.15), transparent 70%);
+      top: -100px; left: -100px;
+      animation-delay: 0s;
+      opacity: 1;
+    }
+
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(234,88,12,0.1), transparent 70%);
+      bottom: 20%; right: -80px;
+      animation-delay: -3s;
+      opacity: 1;
+    }
+
+    .orb-3 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(251,146,60,0.08), transparent 70%);
+      top: 50%; left: 40%;
+      animation-delay: -5s;
+      opacity: 1;
+    }
+
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(20px, -30px) scale(1.05); }
+      66% { transform: translate(-15px, 20px) scale(0.95); }
+    }
+
+    /* ═══════════════════════════════════════════
+       LANDING VIEW
+    ═══════════════════════════════════════════ */
+    #landing-view {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.75rem;
+      color: var(--orange);
+      background: var(--orange-dim);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      padding: 6px 16px;
+      border-radius: 100px;
+      letter-spacing: 0.06em;
+      margin-bottom: 32px;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--orange);
+      border-radius: 50%;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .hero-headline {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+      color: var(--white);
+      margin-bottom: 24px;
+      animation: fadeUp 0.8s 0.1s ease both;
+    }
+
+    .hero-headline .accent {
+      background: linear-gradient(135deg, var(--orange), #fb923c, #fbbf24);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      max-width: 560px;
+      line-height: 1.7;
+      margin-bottom: 48px;
+      animation: fadeUp 0.8s 0.2s ease both;
+    }
+
+    .hero-sub strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeUp 0.8s 0.3s ease both;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #080808;
+      background: linear-gradient(135deg, var(--orange), #ea580c);
+      border: none;
+      padding: 14px 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 24px rgba(249, 115, 22, 0.3);
+      text-decoration: none;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(249, 115, 22, 0.45);
+    }
+
+    .btn-primary .arrow {
+      display: inline-block;
+      transition: transform 0.2s ease;
+    }
+
+    .btn-primary:hover .arrow { transform: translateX(4px); }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'DM Sans', sans-serif;
       font-size: 0.9rem;
-      color: var(--muted);
+      font-weight: 400;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid var(--border2);
+      padding: 13px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-ghost:hover {
+      border-color: #444;
+      color: var(--text);
+    }
+
+    /* Stats strip */
+    .hero-stats {
+      display: flex;
+      align-items: center;
+      gap: 40px;
+      margin-top: 72px;
+      padding-top: 40px;
+      border-top: 1px solid var(--border);
+      animation: fadeUp 0.8s 0.4s ease both;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.03em;
+    }
+
+    .stat-value .stat-accent { color: var(--orange); }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-top: 2px;
       font-weight: 300;
     }
 
-    .input-card {
-      background: var(--card);
+    .stat-sep {
+      width: 1px;
+      height: 36px;
+      background: var(--border);
+    }
+
+    /* ─── HOW IT WORKS ─── */
+    .section-hiw {
+      padding: 100px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .section-tag {
+      display: inline-block;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+
+    .section-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .step-card {
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 12px;
       padding: 24px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .step-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--orange-dim), transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .step-card:hover {
+      border-color: rgba(249, 115, 22, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .step-card:hover::before { opacity: 1; }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--orange-dim);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--orange);
+    }
+
+    .step-content { position: relative; z-index: 1; }
+
+    .step-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .step-desc {
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-weight: 300;
+    }
+
+    /* CTA Banner */
+    .cta-banner {
+      margin: 0 24px 100px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      background: linear-gradient(135deg, rgba(249,115,22,0.1), rgba(234,88,12,0.05));
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      border-radius: 20px;
+      padding: 60px 48px;
+      text-align: center;
+    }
+
+    .cta-banner h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 12px;
+      letter-spacing: -0.03em;
+    }
+
+    .cta-banner p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
       margin-bottom: 32px;
+      font-weight: 300;
+    }
+
+    /* ═══════════════════════════════════════════
+       TOOL VIEW
+    ═══════════════════════════════════════════ */
+    #tool-view {
+      display: none;
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      padding: 100px 24px 80px;
+    }
+
+    .tool-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .tool-header {
+      margin-bottom: 40px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .tool-header h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+
+    .tool-header p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 300;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      margin-bottom: 24px;
+      transition: color 0.2s;
+      cursor: pointer;
+    }
+
+    .back-link:hover { color: var(--orange); }
+
+    /* Input card */
+    .input-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 32px;
+      animation: fadeUp 0.6s 0.1s ease both;
+      transition: border-color 0.3s ease;
+    }
+
+    .input-card:focus-within {
+      border-color: rgba(249, 115, 22, 0.35);
+    }
+
+    .input-label {
+      display: block;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 12px;
     }
 
     textarea {
       width: 100%;
-      min-height: 200px;
+      min-height: 180px;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 8px;
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
       font-size: 0.95rem;
-      line-height: 1.6;
-      padding: 14px 16px;
+      line-height: 1.7;
+      padding: 16px 18px;
       resize: vertical;
       outline: none;
-      transition: border-color 0.15s;
+      transition: border-color 0.2s ease;
     }
 
-    textarea::placeholder { color: var(--muted); }
-    textarea:focus { border-color: #333; }
-    textarea:disabled { opacity: 0.5; cursor: not-allowed; }
+    textarea::placeholder { color: var(--text-dim); }
+    textarea:focus { border-color: rgba(249, 115, 22, 0.4); }
+    textarea:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .btn-row {
+    .input-footer {
       display: flex;
-      gap: 12px;
-      margin-top: 16px;
       align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
-    button {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 500;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: opacity 0.15s, background 0.15s;
+    .shortcut-hint {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .key-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 0.68rem;
+      color: var(--text-muted);
     }
 
     #analyzeBtn {
-      background: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
       color: #080808;
-      padding: 10px 24px;
+      background: linear-gradient(135deg, var(--orange), #ea580c);
+      border: none;
+      padding: 11px 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 16px rgba(249, 115, 22, 0.25);
     }
 
-    #analyzeBtn:hover:not(:disabled) { opacity: 0.85; }
-    #analyzeBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+    #analyzeBtn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(249, 115, 22, 0.4);
+    }
+
+    #analyzeBtn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
 
     #pdfBtn {
       background: transparent;
-      color: var(--muted);
+      color: var(--text-dim);
       border: 1px solid var(--border);
-      padding: 10px 20px;
+      padding: 10px 18px;
+      border-radius: 8px;
       cursor: not-allowed;
       font-family: 'Fira Code', monospace;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
+      font-weight: 400;
     }
 
-    .loader {
+    /* ─── SPLIT-SCREEN LOADER ─── */
+    #loader-overlay {
       display: none;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border2);
+      margin-bottom: 32px;
+      animation: fadeIn 0.4s ease both;
+    }
+
+    #loader-overlay.active { display: flex; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .loader-left {
+      flex: 1;
+      min-height: 360px;
+      background: var(--surface);
+      display: flex;
       align-items: center;
-      gap: 8px;
-      color: var(--muted);
-      font-size: 0.85rem;
-      margin-left: 4px;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      border-right: 1px solid var(--border);
     }
 
-    .loader.active { display: flex; }
+    .loader-canvas-label {
+      position: absolute;
+      top: 16px;
+      left: 20px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
 
-    .dots span {
-      display: inline-block;
-      width: 4px;
-      height: 4px;
+    #mindmap-canvas {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      inset: 0;
+    }
+
+    .loader-right {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--surface);
+      padding: 24px 20px;
+      overflow-y: auto;
+    }
+
+    .loader-right-title {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 20px;
+    }
+
+    .step-tracker {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .tracker-step {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      position: relative;
+    }
+
+    .tracker-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 28px;
+      bottom: -8px;
+      width: 2px;
+      background: var(--border);
+      transition: background 0.5s ease;
+    }
+
+    .tracker-step.done:not(:last-child)::after,
+    .tracker-step.active:not(:last-child)::after {
+      background: var(--orange);
+    }
+
+    .tracker-dot {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
-      background: var(--muted);
-      animation: pulse 1.2s infinite ease-in-out;
+      border: 2px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+      transition: all 0.4s ease;
+      position: relative;
+      z-index: 1;
+      background: var(--surface);
     }
 
-    .dots span:nth-child(2) { animation-delay: 0.2s; }
-    .dots span:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes pulse {
-      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-      40% { transform: scale(1); opacity: 1; }
+    .tracker-step.active .tracker-dot {
+      border-color: var(--orange);
+      background: var(--orange-dim);
     }
 
+    .tracker-step.done .tracker-dot {
+      border-color: var(--orange);
+      background: var(--orange);
+    }
+
+    .tracker-dot-inner {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--border2);
+      transition: all 0.4s ease;
+    }
+
+    .tracker-step.active .tracker-dot-inner {
+      background: var(--orange);
+      animation: dotPulse 1.2s ease-in-out infinite;
+    }
+
+    .tracker-step.done .tracker-dot-inner {
+      background: white;
+      animation: none;
+    }
+
+    .tracker-step.done .tracker-dot-inner::after {
+      content: '✓';
+      position: absolute;
+      font-size: 11px;
+      color: white;
+      font-weight: 700;
+    }
+
+    .tracker-step.done .tracker-dot-inner {
+      opacity: 0;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.5); opacity: 0.6; }
+    }
+
+    .tracker-step-body {
+      padding-bottom: 20px;
+    }
+
+    .tracker-step-name {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+      transition: color 0.3s ease;
+    }
+
+    .tracker-step.active .tracker-step-name { color: var(--text); }
+    .tracker-step.done .tracker-step-name { color: var(--orange-light); }
+
+    .tracker-step-desc {
+      font-size: 0.73rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+      font-weight: 300;
+    }
+
+    /* ─── RESULTS ─── */
     #output { display: none; }
 
-    .error-box {
-      background: #1a0a0a;
-      border: 1px solid #3a1a1a;
-      border-radius: 6px;
-      padding: 14px 16px;
-      color: #e87070;
-      font-size: 0.9rem;
-      font-family: 'Fira Code', monospace;
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
-    .result-content {
-      background: var(--card);
+    .results-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .btn-restart {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-dim);
+      background: transparent;
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 32px;
+      padding: 7px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-restart:hover { border-color: var(--orange); color: var(--orange); }
+
+    .result-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 36px;
     }
 
     /* Markdown styles */
     .result-content h2 {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
       font-family: 'Fira Code', monospace;
-      font-size: 0.8rem;
-      letter-spacing: 0.08em;
-      margin-top: 36px;
-      margin-bottom: 16px;
-      padding-bottom: 8px;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--orange);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 40px;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
       border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .result-content h2:first-child { margin-top: 0; }
 
+    .result-content h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 14px;
+      background: var(--orange);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
     .result-content h3 {
       font-family: 'Syne', sans-serif;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 600;
-      color: #aaa;
+      color: #bbb;
       margin-top: 20px;
       margin-bottom: 10px;
     }
 
     .result-content p {
-      font-size: 0.93rem;
-      line-height: 1.75;
-      color: #ccc;
+      font-size: 0.92rem;
+      line-height: 1.8;
+      color: #c8c8c8;
       margin-bottom: 12px;
     }
 
@@ -206,70 +918,62 @@
     }
 
     .result-content li {
-      font-size: 0.93rem;
-      line-height: 1.7;
-      color: #ccc;
-      margin-bottom: 4px;
+      font-size: 0.92rem;
+      line-height: 1.75;
+      color: #c8c8c8;
+      margin-bottom: 5px;
     }
 
     .result-content strong { color: var(--text); font-weight: 500; }
-    .result-content em { color: #aaa; }
+    .result-content em { color: #999; }
 
     .result-content code {
       font-family: 'Fira Code', monospace;
-      font-size: 0.85rem;
+      font-size: 0.83rem;
       background: #1a1a1a;
       border: 1px solid var(--border);
-      border-radius: 3px;
-      padding: 1px 5px;
+      border-radius: 4px;
+      padding: 2px 6px;
       color: #d4d4d4;
     }
 
     .result-content pre {
-      background: #1a1a1a;
+      background: #0f0f0f;
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 16px;
+      border-radius: 8px;
+      padding: 18px;
       overflow-x: auto;
       margin-bottom: 16px;
     }
 
-    .result-content pre code {
-      background: none;
-      border: none;
-      padding: 0;
-    }
+    .result-content pre code { background: none; border: none; padding: 0; }
 
     .result-content hr {
       border: none;
       border-top: 1px solid var(--border);
-      margin: 24px 0;
+      margin: 28px 0;
     }
 
-    /* Perplexity Prompt section special styling */
+    /* Perplexity section */
     .perplexity-section {
       background: var(--prompt-bg);
       border: 1px solid var(--prompt-border);
-      border-radius: 8px;
-      padding: 20px 24px;
-      margin-top: 8px;
+      border-radius: 10px;
+      padding: 22px 26px;
+      margin-top: 10px;
       position: relative;
     }
 
     .perplexity-section p,
     .perplexity-section li {
       font-family: 'Fira Code', monospace;
-      font-size: 0.82rem;
-      line-height: 1.8;
-      color: #b0c4de;
+      font-size: 0.8rem;
+      line-height: 1.85;
+      color: #9ab4cf;
     }
 
-    .perplexity-section ul,
-    .perplexity-section ol {
-      padding-left: 18px;
-    }
-
-    .perplexity-section strong { color: #c8dff5; }
+    .perplexity-section ul, .perplexity-section ol { padding-left: 18px; }
+    .perplexity-section strong { color: #c0d8f0; }
 
     .copy-btn {
       display: inline-flex;
@@ -278,64 +982,518 @@
       margin-top: 16px;
       background: transparent;
       border: 1px solid var(--prompt-border);
-      color: #6a8cae;
+      color: #5a7a9a;
       font-family: 'Fira Code', monospace;
-      font-size: 0.78rem;
-      padding: 7px 14px;
-      border-radius: 4px;
-      transition: border-color 0.15s, color 0.15s;
+      font-size: 0.75rem;
+      padding: 8px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
-    .copy-btn:hover { border-color: #3a5a7a; color: #90b4d4; }
-    .copy-btn.copied { color: #6aae8c; border-color: #2a5a3a; }
+    .copy-btn:hover { border-color: #3a5a7a; color: #8ab0d0; }
+    .copy-btn.copied { color: #5aae7a; border-color: #2a6a4a; }
+
+    /* Error box */
+    .error-box {
+      background: #150808;
+      border: 1px solid #3a1212;
+      border-radius: 8px;
+      padding: 16px 20px;
+      color: #e88080;
+      font-size: 0.88rem;
+      font-family: 'Fira Code', monospace;
+    }
+
+    /* Footer */
+    .tool-footer {
+      text-align: center;
+      padding: 32px 24px;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      font-weight: 300;
+    }
+
+    .tool-footer a { color: var(--orange); text-decoration: none; }
+    .tool-footer a:hover { text-decoration: underline; }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 700px) {
+      nav { padding: 16px 20px; }
+      .nav-badge { display: none; }
+
+      #loader-overlay.active {
+        flex-direction: column;
+      }
+
+      .loader-right {
+        width: 100%;
+        border-right: none;
+        border-top: 1px solid var(--border);
+      }
+
+      .loader-left { min-height: 220px; }
+
+      .hero-stats { gap: 24px; }
+      .stat-sep { display: none; }
+
+      .cta-banner { padding: 40px 24px; }
+      .result-content { padding: 24px 20px; }
+
+      .steps-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Arthakram Research</h1>
-      <p>Paste your problem statement. Get research that wins.</p>
-    </header>
 
-    <div class="input-card">
-      <textarea
-        id="problemInput"
-        placeholder="Paste your case competition problem statement here..."
-      ></textarea>
-      <div class="btn-row">
-        <button id="analyzeBtn" onclick="analyze()">Analyse</button>
-        <button id="pdfBtn" disabled title="Coming soon">Upload PDF — Coming Soon</button>
-        <div class="loader" id="loader">
-          <div class="dots">
-            <span></span><span></span><span></span>
-          </div>
-          Analysing...
+  <!-- Background Orbs -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Nav -->
+  <nav id="main-nav">
+    <a class="nav-logo" href="#" onclick="showLanding(); return false;">
+      <div class="nav-logo-icon">A</div>
+      <span class="nav-logo-text">Arthakram</span>
+    </a>
+    <div class="nav-badge">by Rishihood University</div>
+    <button class="nav-cta" id="nav-cta-btn" onclick="showTool()">Start Researching →</button>
+  </nav>
+
+  <!-- ═══ LANDING VIEW ═══ -->
+  <div id="landing-view">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-eyebrow">First-principles case research · Powered by Gemini AI</div>
+      <h1 class="hero-headline">
+        Win case comps<br />with <span class="accent">smarter research.</span>
+      </h1>
+      <p class="hero-sub">
+        Paste your problem statement. Arthakram breaks it down using a
+        <strong>7-step first-principles framework</strong> and returns a
+        structured research brief in under 30 seconds.
+      </p>
+      <div class="hero-cta-group">
+        <button class="btn-primary" onclick="showTool()">
+          Analyse a Problem <span class="arrow">→</span>
+        </button>
+        <a class="btn-ghost" href="#how-it-works">
+          How it works ↓
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-value"><span class="stat-accent">7</span></div>
+          <div class="stat-label">Research dimensions</div>
+        </div>
+        <div class="stat-sep"></div>
+        <div class="stat-item">
+          <div class="stat-value"><span class="stat-accent">30s</span></div>
+          <div class="stat-label">Average response time</div>
+        </div>
+        <div class="stat-sep"></div>
+        <div class="stat-item">
+          <div class="stat-value"><span class="stat-accent">0→</span></div>
+          <div class="stat-label">Prior research needed</div>
+        </div>
+        <div class="stat-sep"></div>
+        <div class="stat-item">
+          <div class="stat-value"><span class="stat-accent">∞</span></div>
+          <div class="stat-label">Perplexity prompts generated</div>
         </div>
       </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="section-hiw" id="how-it-works">
+      <div class="section-header">
+        <div class="section-tag">// The Framework</div>
+        <h2 class="section-title">7 steps from chaos<br />to clarity</h2>
+        <p class="section-desc">
+          Every problem gets the same rigorous treatment. No shortcuts,
+          no surface-level analysis — just structured thinking that wins.
+        </p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card reveal">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <div class="step-title">Strip the Core Problem</div>
+            <div class="step-desc">Removes noise. Rewrites the problem in one sentence. Identifies who, why now, and what changes if solved.</div>
+          </div>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <div class="step-title">First Principles Deconstruction</div>
+            <div class="step-desc">Finds atomic value questions. Audits assumptions. Identifies the riskiest bet that could collapse your entire strategy.</div>
+          </div>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <div class="step-title">Business Anatomy</div>
+            <div class="step-desc">Maps stakeholders, constraints, and success definitions. Separates what's non-negotiable from what's a variable.</div>
+          </div>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">04</div>
+          <div class="step-content">
+            <div class="step-title">Derived Research Questions</div>
+            <div class="step-desc">Specific, falsifiable questions traceable to the core problem — the ones competitor teams will miss.</div>
+          </div>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">05</div>
+          <div class="step-content">
+            <div class="step-title">Perplexity Prompt</div>
+            <div class="step-desc">A ready-to-copy research brief built for Perplexity AI. Benchmarks, failure patterns, customer psychology — all requested specifically.</div>
+          </div>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">06</div>
+          <div class="step-content">
+            <div class="step-title">Research Angles</div>
+            <div class="step-desc">10–12 critical questions tagged [MARKET] [CUSTOMER] [FINANCIAL] [STRATEGIC] [OPERATIONAL] [RISK].</div>
+          </div>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">07</div>
+          <div class="step-content">
+            <div class="step-title">Working Hypotheses</div>
+            <div class="step-desc">3 testable claims before research begins. "We believe X because Y. This would be false if Z." Start researching with direction.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Banner -->
+    <div class="cta-banner reveal">
+      <h2>Ready to compete smarter?</h2>
+      <p>Paste your problem statement and get your research brief in under 30 seconds.</p>
+      <button class="btn-primary" onclick="showTool()">
+        Start Researching <span class="arrow">→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ TOOL VIEW ═══ -->
+  <div id="tool-view">
+    <div class="tool-container">
+
+      <a class="back-link" onclick="showLanding()">
+        ← Back to home
+      </a>
+
+      <div class="tool-header">
+        <h1>Research Brief Generator</h1>
+        <p>Paste your case competition problem statement below and hit Analyse.</p>
+      </div>
+
+      <!-- Input Card -->
+      <div class="input-card">
+        <label class="input-label" for="problemInput">// Problem Statement</label>
+        <textarea
+          id="problemInput"
+          placeholder="Paste your case competition problem statement here...&#10;&#10;Example: How can a D2C specialty coffee brand in Tier-2 Indian cities acquire its first 1,000 loyal customers within 6 months with a budget of ₹20 lakhs?"
+        ></textarea>
+        <div class="input-footer">
+          <div class="shortcut-hint">
+            Press <span class="key-badge">⌘</span> + <span class="key-badge">Enter</span> to analyse
+          </div>
+          <div style="display:flex; gap:12px; align-items:center;">
+            <button id="pdfBtn" disabled title="Coming in Phase 2">Upload PDF — Soon</button>
+            <button id="analyzeBtn" onclick="analyze()">
+              <span id="analyzeBtnIcon">⚡</span> Analyse
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Split-Screen Loader -->
+      <div id="loader-overlay">
+        <div class="loader-left">
+          <div class="loader-canvas-label">// Building Research Map</div>
+          <canvas id="mindmap-canvas"></canvas>
+        </div>
+        <div class="loader-right">
+          <div class="loader-right-title">// AI Processing Steps</div>
+          <div class="step-tracker" id="stepTracker">
+            <div class="tracker-step" data-step="0">
+              <div class="tracker-dot"><div class="tracker-dot-inner"></div></div>
+              <div class="tracker-step-body">
+                <div class="tracker-step-name">Stripping Core Problem</div>
+                <div class="tracker-step-desc">Removing noise, finding the one sentence that matters</div>
+              </div>
+            </div>
+            <div class="tracker-step" data-step="1">
+              <div class="tracker-dot"><div class="tracker-dot-inner"></div></div>
+              <div class="tracker-step-body">
+                <div class="tracker-step-name">First Principles</div>
+                <div class="tracker-step-desc">Breaking assumptions, finding what's actually true</div>
+              </div>
+            </div>
+            <div class="tracker-step" data-step="2">
+              <div class="tracker-dot"><div class="tracker-dot-inner"></div></div>
+              <div class="tracker-step-body">
+                <div class="tracker-step-name">Business Anatomy</div>
+                <div class="tracker-step-desc">Mapping stakeholders, constraints & success metrics</div>
+              </div>
+            </div>
+            <div class="tracker-step" data-step="3">
+              <div class="tracker-dot"><div class="tracker-dot-inner"></div></div>
+              <div class="tracker-step-body">
+                <div class="tracker-step-name">Research Questions</div>
+                <div class="tracker-step-desc">Deriving specific, falsifiable questions</div>
+              </div>
+            </div>
+            <div class="tracker-step" data-step="4">
+              <div class="tracker-dot"><div class="tracker-dot-inner"></div></div>
+              <div class="tracker-step-body">
+                <div class="tracker-step-name">Perplexity Prompt</div>
+                <div class="tracker-step-desc">Crafting a niche-level research brief</div>
+              </div>
+            </div>
+            <div class="tracker-step" data-step="5">
+              <div class="tracker-dot"><div class="tracker-dot-inner"></div></div>
+              <div class="tracker-step-body">
+                <div class="tracker-step-name">Research Angles</div>
+                <div class="tracker-step-desc">Tagging 10–12 critical blindspot questions</div>
+              </div>
+            </div>
+            <div class="tracker-step" data-step="6">
+              <div class="tracker-dot"><div class="tracker-dot-inner"></div></div>
+              <div class="tracker-step-body">
+                <div class="tracker-step-name">Working Hypotheses</div>
+                <div class="tracker-step-desc">Forming 3 testable claims before research</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Output -->
+      <div id="output"></div>
+
     </div>
 
-    <div id="output"></div>
+    <div class="tool-footer">
+      Built by <a href="https://github.com/rish106-hub" target="_blank">Rishav Dewan</a>
+      &amp; <a href="https://github.com/RedRangerWentWild" target="_blank">Aadi Kalra</a>
+      · Arthakram Consulting Club · Rishihood University
+    </div>
   </div>
 
   <script>
     marked.setOptions({ breaks: true, gfm: true });
 
+    /* ─── VIEW TRANSITIONS ─── */
+    function showTool() {
+      document.getElementById('landing-view').style.display = 'none';
+      document.getElementById('tool-view').style.display = 'block';
+      document.getElementById('nav-cta-btn').style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showLanding() {
+      document.getElementById('landing-view').style.display = 'block';
+      document.getElementById('tool-view').style.display = 'none';
+      document.getElementById('nav-cta-btn').style.display = 'inline-flex';
+      document.getElementById('output').style.display = 'none';
+      document.getElementById('output').innerHTML = '';
+      document.getElementById('problemInput').value = '';
+      document.getElementById('problemInput').disabled = false;
+      document.getElementById('analyzeBtn').disabled = false;
+      document.getElementById('analyzeBtn').innerHTML = '<span>⚡</span> Analyse';
+      stopLoader();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ─── SCROLL REVEAL ─── */
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 80);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    /* ─── MIND MAP CANVAS ─── */
+    let animFrameId = null;
+    let nodes = [];
+    let edges = [];
+    let nodeCount = 0;
+
+    function initMindMap() {
+      const canvas = document.getElementById('mindmap-canvas');
+      const parent = canvas.parentElement;
+      canvas.width = parent.offsetWidth;
+      canvas.height = parent.offsetHeight;
+      nodes = [];
+      edges = [];
+      nodeCount = 0;
+
+      // Center node
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      nodes.push({ x: cx, y: cy, r: 7, alpha: 0, color: '#F97316', label: 'Problem', born: 0 });
+
+      drawMindMap();
+    }
+
+    function addNode(canvas) {
+      if (nodeCount > 22) return;
+      nodeCount++;
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 60 + Math.random() * (Math.min(canvas.width, canvas.height) / 2 - 80);
+      const parent = nodes[Math.floor(Math.random() * Math.min(nodes.length, 5))];
+      const nx = parent ? parent.x + Math.cos(angle) * (40 + Math.random() * 80) : cx + Math.cos(angle) * dist;
+      const ny = parent ? parent.y + Math.sin(angle) * (40 + Math.random() * 80) : cy + Math.sin(angle) * dist;
+
+      const colors = ['#F97316', '#FB923C', '#FED7AA', '#EA580C', '#C2410C'];
+      const newNode = { x: nx, y: ny, r: 3 + Math.random() * 4, alpha: 0, color: colors[Math.floor(Math.random() * colors.length)], born: Date.now() };
+      nodes.push(newNode);
+      if (parent) edges.push({ from: parent, to: newNode, alpha: 0 });
+    }
+
+    function drawMindMap() {
+      const canvas = document.getElementById('mindmap-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Fade in edges
+      edges.forEach(e => {
+        e.alpha = Math.min(1, e.alpha + 0.04);
+        ctx.beginPath();
+        ctx.moveTo(e.from.x, e.from.y);
+        ctx.lineTo(e.to.x, e.to.y);
+        ctx.strokeStyle = `rgba(249,115,22,${e.alpha * 0.3})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+
+      // Draw nodes
+      nodes.forEach(n => {
+        n.alpha = Math.min(1, n.alpha + 0.05);
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = n.color.replace(')', `,${n.alpha})`).replace('rgb', 'rgba').replace('#', '');
+        // Simple hex to rgba
+        const hex = n.color;
+        const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+        ctx.fillStyle = `rgba(${r},${g},${b},${n.alpha})`;
+        ctx.shadowColor = `rgba(${r},${g},${b},0.5)`;
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+
+      animFrameId = requestAnimationFrame(drawMindMap);
+    }
+
+    let nodeInterval = null;
+
+    function startMindMap() {
+      initMindMap();
+      const canvas = document.getElementById('mindmap-canvas');
+      nodeInterval = setInterval(() => addNode(canvas), 500);
+    }
+
+    function stopLoader() {
+      if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+      if (nodeInterval) { clearInterval(nodeInterval); nodeInterval = null; }
+    }
+
+    /* ─── STEP TRACKER ─── */
+    let stepInterval = null;
+    let currentStep = -1;
+
+    function startStepTracker(durationMs) {
+      const steps = document.querySelectorAll('.tracker-step');
+      const stepCount = steps.length;
+      const stepDuration = durationMs / stepCount;
+      currentStep = -1;
+
+      steps.forEach(s => { s.classList.remove('active', 'done'); });
+
+      function advanceStep() {
+        if (currentStep >= 0 && currentStep < steps.length) {
+          steps[currentStep].classList.remove('active');
+          steps[currentStep].classList.add('done');
+        }
+        currentStep++;
+        if (currentStep < steps.length) {
+          steps[currentStep].classList.add('active');
+          // Scroll step into view
+          steps[currentStep].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      }
+
+      advanceStep();
+      stepInterval = setInterval(advanceStep, stepDuration);
+    }
+
+    function stopStepTracker() {
+      if (stepInterval) { clearInterval(stepInterval); stepInterval = null; }
+      // Mark all remaining as done
+      document.querySelectorAll('.tracker-step').forEach(s => {
+        s.classList.remove('active');
+        s.classList.add('done');
+      });
+    }
+
+    /* ─── ANALYSE ─── */
     async function analyze() {
       const input = document.getElementById('problemInput');
       const btn = document.getElementById('analyzeBtn');
-      const loader = document.getElementById('loader');
+      const loader = document.getElementById('loader-overlay');
       const output = document.getElementById('output');
 
       const problem = input.value.trim();
-      if (!problem) return;
+      if (!problem) {
+        input.focus();
+        input.style.borderColor = 'rgba(249,115,22,0.6)';
+        setTimeout(() => input.style.borderColor = '', 1000);
+        return;
+      }
 
       // Loading state
       btn.disabled = true;
-      btn.textContent = 'Analysing...';
+      btn.innerHTML = '<span>⏳</span> Analysing...';
       input.disabled = true;
-      loader.classList.add('active');
       output.style.display = 'none';
       output.innerHTML = '';
+
+      // Show loader
+      loader.classList.add('active');
+      startMindMap();
+      startStepTracker(25000); // estimate 25s
 
       try {
         const res = await fetch('/analyze', {
@@ -346,30 +1504,56 @@
 
         const data = await res.json();
 
+        // Stop animations
+        stopLoader();
+        stopStepTracker();
+        loader.classList.remove('active');
+
         if (!res.ok || data.error) {
-          output.innerHTML = `<div class="error-box">Error: ${data.error || 'Unknown error'}</div>`;
+          output.innerHTML = `<div class="error-box">⚠ ${data.error || 'Unknown error'}</div>`;
           output.style.display = 'block';
           return;
         }
 
         const html = marked.parse(data.result);
-        output.innerHTML = `<div class="result-content" id="resultContent">${html}</div>`;
+        output.innerHTML = `
+          <div class="results-header">
+            <div class="results-title">✓ Research Brief Generated</div>
+            <button class="btn-restart" onclick="resetTool()">↺ New Analysis</button>
+          </div>
+          <div class="result-content" id="resultContent">${html}</div>
+        `;
         output.style.display = 'block';
 
         injectPerplexityFormatting();
         injectCopyButton();
 
+        // Smooth scroll to output
+        output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
       } catch (err) {
-        output.innerHTML = `<div class="error-box">Network error: ${err.message}</div>`;
+        stopLoader();
+        stopStepTracker();
+        loader.classList.remove('active');
+        output.innerHTML = `<div class="error-box">⚠ Network error: ${err.message}</div>`;
         output.style.display = 'block';
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Analyse';
+        btn.innerHTML = '<span>⚡</span> Analyse';
         input.disabled = false;
-        loader.classList.remove('active');
       }
     }
 
+    function resetTool() {
+      document.getElementById('output').style.display = 'none';
+      document.getElementById('output').innerHTML = '';
+      document.getElementById('problemInput').value = '';
+      document.getElementById('problemInput').disabled = false;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => document.getElementById('problemInput').focus(), 400);
+    }
+
+    /* ─── PERPLEXITY FORMATTING ─── */
     function injectPerplexityFormatting() {
       const content = document.getElementById('resultContent');
       if (!content) return;
@@ -377,7 +1561,6 @@
       const headings = content.querySelectorAll('h2');
       headings.forEach(h2 => {
         if (h2.textContent.toLowerCase().includes('perplexity prompt')) {
-          // Wrap everything between this h2 and the next h2 in a perplexity-section div
           const wrapper = document.createElement('div');
           wrapper.className = 'perplexity-section';
           wrapper.id = 'perplexitySection';
@@ -402,26 +1585,35 @@
       const btn = document.createElement('button');
       btn.className = 'copy-btn';
       btn.id = 'copyBtn';
-      btn.textContent = 'Copy Prompt';
+      btn.innerHTML = '⎘ Copy Prompt';
 
       btn.onclick = () => {
-        const text = section.innerText.replace('Copy Prompt', '').trim();
+        const text = section.innerText.replace('⎘ Copy Prompt', '').trim();
         navigator.clipboard.writeText(text).then(() => {
-          btn.textContent = 'Copied';
+          btn.innerHTML = '✓ Copied!';
           btn.classList.add('copied');
           setTimeout(() => {
-            btn.textContent = 'Copy Prompt';
+            btn.innerHTML = '⎘ Copy Prompt';
             btn.classList.remove('copied');
-          }, 2000);
+          }, 2500);
         });
       };
 
       section.appendChild(btn);
     }
 
-    // Allow Ctrl+Enter / Cmd+Enter to submit
+    /* ─── KEYBOARD SHORTCUT ─── */
     document.getElementById('problemInput').addEventListener('keydown', e => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') analyze();
+    });
+
+    /* ─── CANVAS RESIZE ─── */
+    window.addEventListener('resize', () => {
+      const canvas = document.getElementById('mindmap-canvas');
+      if (canvas && document.getElementById('loader-overlay').classList.contains('active')) {
+        canvas.width = canvas.parentElement.offsetWidth;
+        canvas.height = canvas.parentElement.offsetHeight;
+      }
     });
   </script>
 </body>
