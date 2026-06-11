@@ -1,7 +1,13 @@
 import os
+import json
 from flask import Flask, request, jsonify, send_from_directory
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
+from google.genai import types
+from deck_templates import (
+    FRAMEWORKS_BY_CASE_TYPE, SECTION_BLUEPRINT, SLIDE_ARCHETYPE_DESCRIPTIONS,
+    MONEYSHOT_BY_CASE_TYPE, CASE_TYPE_LABELS,
+)
 
 load_dotenv()
 
@@ -180,18 +186,31 @@ State each hypothesis as: "We believe [claim] because [first principles reasonin
 ## Working Hypotheses"""
 
 
-def get_gemini_model():
+DECK_GENERATION_PROMPT = """You are a case competition deck architect trained on winning decks from top international case competitions.
+
+Given the research brief and case parameters below, output the deck's strategic content as JSON.
+
+You must identify:
+1. RECOMMENDATION — what this deck recommends (specific, not generic)
+2. CONTRARIAN ALTERNATIVE — the less-obvious answer (not the default implied by the case prompt)
+3. FORESHADOWING SEED — one sentence to plant in Context section (30+ slides before naming the alternative)
+4. MONEYSHOT — the single dramatic number/visual that is the deck's analytical climax
+5. ACTION TITLES for key slides in each section (declarative sentences with numbers)
+6. FRAMEWORKS EXPLANATION — which frameworks to use and why, layered for this specific case
+
+RULES:
+- All action titles must be declarative findings, not topic labels
+  BAD: "Customer Demographics" | GOOD: "Urban Gen Z spends 4.3x more per visit than suburban customers"
+- The contrarian alternative must differ meaningfully from the default answer implied by the case prompt
+- frameworks_explanation must name specific frameworks and explain the layering logic for this specific case
+- Include numbers wherever possible in titles and findings"""
+
+
+def get_gemini_client():
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("GEMINI_API_KEY not set in environment")
-    genai.configure(api_key=api_key)
-    return genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
-        generation_config=genai.types.GenerationConfig(
-            temperature=0.3,
-            max_output_tokens=8192,
-        ),
-    )
+    return genai.Client(api_key=api_key)
 
 
 @app.route("/")
@@ -209,16 +228,246 @@ def analyze():
     full_prompt = f"{SYSTEM_PROMPT}\n\n---\n\nPROBLEM STATEMENT: {problem}"
 
     try:
-        model = get_gemini_model()
+        client = get_gemini_client()
     except ValueError as e:
         return jsonify({"error": str(e)}), 500
 
     try:
-        response = model.generate_content(full_prompt)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=full_prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.3,
+                max_output_tokens=8192,
+            ),
+        )
         return jsonify({"result": response.text})
     except Exception as e:
         return jsonify({"error": f"Gemini API error: {str(e)}"}), 500
 
 
+@app.route("/prepare-deck", methods=["POST"])
+def prepare_deck():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Request body required."}), 400
+
+    research_brief = data.get("research_brief", "").strip()
+    case_type = data.get("case_type", "strategy")
+    audience = data.get("audience", "Competition Judges")
+    deck_length = max(20, min(200, int(data.get("deck_length", 100))))
+
+    if not research_brief:
+        return jsonify({"error": "Research brief is required."}), 400
+    if case_type not in FRAMEWORKS_BY_CASE_TYPE:
+        return jsonify({"error": f"Invalid case type. Must be one of: {', '.join(FRAMEWORKS_BY_CASE_TYPE.keys())}"}), 400
+
+    frameworks = FRAMEWORKS_BY_CASE_TYPE[case_type]
+    moneyshot_template = MONEYSHOT_BY_CASE_TYPE[case_type]
+    case_label = CASE_TYPE_LABELS[case_type]
+
+    full_prompt = f"""{DECK_GENERATION_PROMPT}
+
+---
+CASE TYPE: {case_label}
+AUDIENCE: {audience}
+DECK LENGTH: {deck_length} slides
+MONEYSHOT FORMAT FOR THIS CASE TYPE: {moneyshot_template}
+
+RESEARCH BRIEF:
+{research_brief}
+
+Return ONLY this JSON structure (no markdown, no explanation, no code fences):
+{{
+  "recommendation": "concise recommendation statement for this specific case",
+  "contrarian_alternative": "the less-obvious alternative this deck recommends over the default answer",
+  "foreshadowing_seed": "one-sentence insight to plant in Context section as a subtle seed for the alternative",
+  "moneyshot": "the specific dramatic number/claim adapted from the research for this case",
+  "exec_summary_headline": "recommendation action title — declarative sentence with numbers",
+  "exec_summary_for_reasons": ["specific reason 1", "specific reason 2", "specific reason 3"],
+  "exec_summary_against_reasons": ["counter-argument 1", "counter-argument 2", "counter-argument 3"],
+  "context_key_finding": "action title for main context slide — include a number",
+  "actors_key_finding": "action title for main actors slide — include a number",
+  "analysis_key_finding": "action title for main analysis/moneyshot slide — include a number",
+  "feasibility_key_finding": "action title for feasibility slide showing why obvious answer fails",
+  "alternative_key_finding": "action title for recommended alternative slide — include a number",
+  "conclusion_synthesis": "final synthesis statement for conclusion slide",
+  "frameworks_explanation": "350-word explanation of which frameworks to use, how to layer them, and why for this specific case"
+}}"""
+
+    try:
+        client = get_gemini_client()
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=full_prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.4,
+                max_output_tokens=4096,
+                response_mime_type="application/json",
+            ),
+        )
+        text = response.text.strip()
+        # Strip markdown fences if present
+        if text.startswith("```json"):
+            text = text[7:]  # Remove ```json
+        if text.startswith("```"):
+            text = text[3:]  # Remove ```
+        if text.endswith("```"):
+            text = text[:-3]  # Remove closing ```
+        text = text.strip()
+        gemini_data = json.loads(text)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 500
+    except json.JSONDecodeError as e:
+        return jsonify({"error": f"Failed to parse AI response as JSON. Please try again. ({str(e)})"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Gemini API error: {str(e)}"}), 500
+
+    # --- Build deterministic deck structure ---
+    slide_counts = []
+    for section in SECTION_BLUEPRINT:
+        count = max(section["min_slides"], round(deck_length * section["proportion"]))
+        slide_counts.append(count)
+
+    # Adjust total to match requested deck_length
+    total = sum(slide_counts)
+    diff = deck_length - total
+    if diff != 0:
+        slide_counts[3] = max(SECTION_BLUEPRINT[3]["min_slides"], slide_counts[3] + diff)
+
+    fw_key_map = {
+        "exec_summary": None, "context": "context", "actors": "actors",
+        "analysis": "analysis", "feasibility": "feasibility",
+        "alternative": "alternative", "conclusion": None, "appendix": None,
+    }
+
+    key_finding_map = {
+        "exec_summary": gemini_data.get("exec_summary_headline", "Strategic recommendation"),
+        "context": gemini_data.get("context_key_finding", "Industry context demands strategic urgency"),
+        "actors": gemini_data.get("actors_key_finding", "Key actors face divergent incentives"),
+        "analysis": gemini_data.get("analysis_key_finding", "Quantitative gap reveals strategic imperative"),
+        "feasibility": gemini_data.get("feasibility_key_finding", "Conventional approach fails feasibility test"),
+        "alternative": gemini_data.get("alternative_key_finding", "Contrarian alternative delivers superior outcomes"),
+        "conclusion": gemini_data.get("conclusion_synthesis", "Recommended alternative uniquely solves the core problem"),
+        "appendix": "Supporting analysis and references",
+    }
+
+    slide_number = 1
+    sections = []
+
+    for i, section_def in enumerate(SECTION_BLUEPRINT):
+        section_id = section_def["id"]
+        section_slide_count = slide_counts[i]
+        fw_key = fw_key_map.get(section_id)
+        section_frameworks = frameworks.get(fw_key, []) if fw_key else []
+        archetypes = section_def["slide_archetypes"]
+        slides = []
+
+        for archetype in archetypes:
+            if len(slides) >= section_slide_count:
+                break
+
+            slide = {
+                "slide_number": slide_number,
+                "archetype": archetype,
+                "archetype_description": SLIDE_ARCHETYPE_DESCRIPTIONS.get(archetype, ""),
+            }
+
+            if archetype == "cover":
+                slide["title"] = "Case Competition Deck"
+                slide["subtitle"] = gemini_data.get("recommendation", "Strategic Recommendation")
+            elif archetype == "table_of_contents":
+                slide["title"] = "Table of Contents"
+            elif archetype == "two_column_for_against":
+                slide["title"] = gemini_data.get("exec_summary_headline", "Recommendation")
+                slide["for_reasons"] = gemini_data.get("exec_summary_for_reasons", ["Reason 1", "Reason 2", "Reason 3"])
+                slide["against_reasons"] = gemini_data.get("exec_summary_against_reasons", ["Counter 1", "Counter 2", "Counter 3"])
+            elif archetype == "section_divider":
+                slide["title"] = section_def["title"]
+                slide["framing"] = section_def["description"]
+            elif archetype == "moneyshot":
+                slide["title"] = gemini_data.get("moneyshot", moneyshot_template)
+                slide["note"] = "Deck climax — single dramatic number/visual"
+            elif archetype == "conclusion_synthesis":
+                slide["title"] = gemini_data.get("conclusion_synthesis", "Therefore…")
+            elif archetype in ("two_chart_action_title", "multi_chart_dense"):
+                kf = key_finding_map.get(section_id, section_def["title"])
+                slide["title"] = kf
+                slide["chart_1"] = section_frameworks[0] if section_frameworks else "Primary analysis"
+                slide["chart_2"] = section_frameworks[1] if len(section_frameworks) > 1 else "Secondary analysis"
+            elif archetype == "three_scenario_projection":
+                slide["title"] = f"Three scenarios: {key_finding_map.get(section_id, section_def['title'])}"
+                slide["pessimistic"] = "Worst case — [populate with specific figures]"
+                slide["realistic"] = "Base case — [populate with specific figures]"
+                slide["optimistic"] = "Best case — [populate with specific figures]"
+            elif archetype == "implementation_roadmap":
+                slide["title"] = "Implementation roadmap — phases, owners, milestones"
+            elif archetype == "deep_dive_with_expert_validation":
+                alt = gemini_data.get("contrarian_alternative", "recommended approach")
+                slide["title"] = f"Expert validation: {alt[:80]}"
+            else:
+                slide["title"] = SLIDE_ARCHETYPE_DESCRIPTIONS.get(archetype, archetype.replace("_", " ").title())
+
+            slides.append(slide)
+            slide_number += 1
+
+        # Fill remaining with two_chart_action_title
+        while len(slides) < section_slide_count:
+            kf = key_finding_map.get(section_id, section_def["title"])
+            slides.append({
+                "slide_number": slide_number,
+                "archetype": "two_chart_action_title",
+                "archetype_description": SLIDE_ARCHETYPE_DESCRIPTIONS.get("two_chart_action_title", ""),
+                "title": f"{kf} — supporting analysis",
+                "chart_1": section_frameworks[0] if section_frameworks else "Supporting data",
+                "chart_2": section_frameworks[1] if len(section_frameworks) > 1 else "Supporting data",
+            })
+            slide_number += 1
+
+        sections.append({
+            "id": section_id,
+            "roman": section_def["roman"],
+            "title": section_def["title"],
+            "slide_count": len(slides),
+            "description": section_def["description"],
+            "frameworks": section_frameworks,
+            "slides": slides,
+        })
+
+    deck_structure = {
+        "case_type": case_type,
+        "case_type_label": case_label,
+        "audience": audience,
+        "total_slides": slide_number - 1,
+        "recommendation": gemini_data.get("recommendation", ""),
+        "contrarian_alternative": gemini_data.get("contrarian_alternative", ""),
+        "foreshadowing_seed": gemini_data.get("foreshadowing_seed", ""),
+        "moneyshot": gemini_data.get("moneyshot", ""),
+        "sections": sections,
+        "recommended_frameworks": frameworks,
+        "frameworks_explanation": gemini_data.get("frameworks_explanation", ""),
+    }
+
+    return jsonify({"deck_structure": deck_structure})
+
+
+@app.route("/get-frameworks", methods=["POST"])
+def get_frameworks():
+    data = request.get_json()
+    case_type = (data.get("case_type", "strategy") if data else "strategy")
+
+    if case_type not in FRAMEWORKS_BY_CASE_TYPE:
+        return jsonify({"error": f"Invalid case type. Valid options: {', '.join(FRAMEWORKS_BY_CASE_TYPE.keys())}"}), 400
+
+    return jsonify({
+        "case_type": case_type,
+        "case_type_label": CASE_TYPE_LABELS[case_type],
+        "frameworks": FRAMEWORKS_BY_CASE_TYPE[case_type],
+        "moneyshot_template": MONEYSHOT_BY_CASE_TYPE[case_type],
+    })
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    # macOS Monterey+ uses port 5000 for AirPlay Receiver — default to 5001 if not set
+    port = int(os.getenv("FLASK_RUN_PORT", 5001))
+    app.run(debug=True, port=port)

@@ -55,7 +55,8 @@ No database. No auth. No frontend framework. Deliberately minimal.
 ```
 Arthakram-Research-tool-Beta/
 ├── app.py                    # Flask backend — routes, Gemini integration, system prompt
-├── index.html                # Single-page frontend — UI, markdown rendering, copy logic
+├── deck_templates.py         # Deck generation: case types, frameworks, archetypes, 8-section blueprint
+├── index.html                # Single-page frontend — 3-step UI, markdown rendering, deck preview
 ├── requirements.txt          # Python dependencies
 ├── .env                      # API key (not committed — see .gitignore)
 ├── README.md
@@ -99,9 +100,11 @@ echo "GEMINI_API_KEY=your_key_here" > .env
 
 # 5. Start the server
 python app.py
+# or on macOS (port 5000 owned by AirPlay):
+FLASK_RUN_PORT=5001 python app.py
 ```
 
-Then open [http://localhost:5000](http://localhost:5000) in your browser.
+Then open [http://localhost:5001](http://localhost:5001) in your browser (or 5001 on macOS).
 
 > **Security:** Never commit `.env`. It is already in `.gitignore` (add it if not present). The API key stays server-side and is never exposed to the frontend.
 
@@ -151,6 +154,63 @@ Accepts a problem statement, returns a structured markdown research brief.
 
 ---
 
+### `POST /prepare-deck`
+
+Accepts research brief + preferences, returns an 8-section deck blueprint with slide archetypes and framework recommendations.
+
+**Request body:**
+```json
+{
+  "research_brief": "string (required)",
+  "case_type": "strategy | mna_finance | marketing | social_impact | policy_trade_ir | operations",
+  "audience": "string",
+  "deck_length": 100
+}
+```
+
+**Success response:**
+```json
+{
+  "deck": {
+    "case_type": "strategy",
+    "audience": "Competition Judges",
+    "total_slides": 100,
+    "sections": [...],
+    "recommended_frameworks": {...},
+    "moneyshot_template": "...",
+    "recommendation": "..."
+  }
+}
+```
+
+| Status | Condition |
+|--------|-----------|
+| `200` | Success |
+| `400` | Missing `research_brief` |
+| `500` | Gemini API failure |
+
+---
+
+### `POST /get-frameworks`
+
+Returns deterministic framework recommendations for a given case type (no Gemini call).
+
+**Request body:**
+```json
+{ "case_type": "strategy" }
+```
+
+**Success response:**
+```json
+{
+  "frameworks": { "context": [...], "actors": [...], "analysis": [...], "feasibility": [...], "alternative": [...] },
+  "moneyshot_template": "...",
+  "case_type_label": "Strategy / Market Entry"
+}
+```
+
+---
+
 ## 🧠 The 7-Step Research Framework
 
 The system prompt embeds an elite case competition methodology. Gemini processes every problem in strict sequence:
@@ -194,16 +254,39 @@ Gemini configuration: `temperature: 0.3`, `max_output_tokens: 8192`
 
 ---
 
+## 🎯 3-Step Workflow (Phase 2)
+
+**Step 1 — Research Brief**
+Paste problem statement → Gemini 2.5 Flash applies 7-step framework → structured markdown brief.
+
+**Step 2 — Deck Prep**
+Select case type (6 options), audience (7 options), deck length → configure your blueprint.
+
+**Step 3 — Blueprint Preview**
+Collapsible 8-section deck tree with:
+- Slide count per section (proportionally allocated)
+- Framework tags (PESTLE, Porter's, NPV model, etc.)
+- Slide archetype list (cover, moneyshot, two-chart action-title, scenarios, etc.)
+- Moneyshot template pre-filled for your case type
+- Gemini-generated slide titles and recommendation headline
+- Copy JSON button for downstream use
+
+---
+
 ## 🗺️ Roadmap
 
-### Phase 2 — PDF Upload *(in progress)*
+### Phase 3 — PPTX Export *(next)*
+- "Download as PPTX" button (stub exists in UI)
+- `GET /export-pptx` route via `python-pptx`
+- Slide archetypes → actual PowerPoint layouts
+
+### Phase 4 — PDF Upload
 - Upload a PDF case brief instead of pasting text
 - `POST /analyze-pdf` route extracting text with `pdfplumber`
 - Frontend: enable the disabled "Upload PDF" button
 
 ### Potential future additions
 - Research history (local storage or SQLite)
-- Export to PDF / Word
 - Saved templates for recurring problem types
 - Rate limiting on `/analyze`
 - Response caching for identical inputs

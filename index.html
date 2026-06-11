@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Case Research Tool</title>
+  <title>Arthakram — Case Research + Deck Generator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
@@ -36,7 +36,7 @@
     }
 
     header {
-      margin-bottom: 40px;
+      margin-bottom: 32px;
     }
 
     header h1 {
@@ -54,12 +54,66 @@
       font-weight: 300;
     }
 
+    /* ── Step indicator ─────────────────────────────── */
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-family: 'Fira Code', monospace;
+    }
+
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.68rem;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .step.active .step-num {
+      background: var(--accent);
+      color: #080808;
+      border-color: var(--accent);
+    }
+
+    .step.active { color: var(--text); }
+
+    .step.completed .step-num {
+      background: #1a3a1a;
+      border-color: #2a5a2a;
+      color: #6aae8c;
+    }
+
+    .step.completed { color: #6aae8c; }
+
+    .step-connector {
+      flex: 1;
+      height: 1px;
+      background: #1e1e1e;
+      margin: 0 10px;
+      max-width: 48px;
+    }
+
+    /* ── Input card ──────────────────────────────────── */
     .input-card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 24px;
-      margin-bottom: 32px;
+      margin-bottom: 24px;
     }
 
     textarea {
@@ -146,6 +200,7 @@
       40% { transform: scale(1); opacity: 1; }
     }
 
+    /* ── Research output ─────────────────────────────── */
     #output { display: none; }
 
     .error-box {
@@ -165,17 +220,13 @@
       padding: 32px;
     }
 
-    /* Markdown styles */
     .result-content h2 {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
       font-family: 'Fira Code', monospace;
       font-size: 0.8rem;
+      font-weight: 400;
+      color: var(--accent);
       letter-spacing: 0.08em;
+      text-transform: uppercase;
       margin-top: 36px;
       margin-bottom: 16px;
       padding-bottom: 8px;
@@ -234,11 +285,7 @@
       margin-bottom: 16px;
     }
 
-    .result-content pre code {
-      background: none;
-      border: none;
-      padding: 0;
-    }
+    .result-content pre code { background: none; border: none; padding: 0; }
 
     .result-content hr {
       border: none;
@@ -246,7 +293,6 @@
       margin: 24px 0;
     }
 
-    /* Perplexity Prompt section special styling */
     .perplexity-section {
       background: var(--prompt-bg);
       border: 1px solid var(--prompt-border);
@@ -265,9 +311,7 @@
     }
 
     .perplexity-section ul,
-    .perplexity-section ol {
-      padding-left: 18px;
-    }
+    .perplexity-section ol { padding-left: 18px; }
 
     .perplexity-section strong { color: #c8dff5; }
 
@@ -288,15 +332,383 @@
 
     .copy-btn:hover { border-color: #3a5a7a; color: #90b4d4; }
     .copy-btn.copied { color: #6aae8c; border-color: #2a5a3a; }
+
+    /* ── Deck prep card ──────────────────────────────── */
+    .deck-prep-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      margin-top: 24px;
+      display: none;
+    }
+
+    .deck-prep-card.visible { display: block; }
+
+    .section-heading {
+      margin-bottom: 18px;
+    }
+
+    .section-heading h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .section-heading p {
+      margin-top: 4px;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .form-row-single {
+      margin-bottom: 18px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-field label {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    select, .form-input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 30px; }
+    select:focus, .form-input:focus { border-color: #333; }
+    select option { background: #111111; }
+
+    #deckBtn {
+      background: var(--accent);
+      color: #080808;
+      padding: 10px 24px;
+    }
+
+    #deckBtn:hover:not(:disabled) { opacity: 0.85; }
+    #deckBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── Deck preview card ───────────────────────────── */
+    .deck-preview-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      margin-top: 24px;
+      display: none;
+    }
+
+    .deck-preview-card.visible { display: block; }
+
+    .deck-preview-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .deck-meta { flex: 1; }
+
+    .deck-meta h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .deck-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .deck-tag {
+      background: #1a1a1a;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 2px 8px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .deck-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.72rem;
+      padding: 7px 12px;
+      border-radius: 4px;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+
+    .icon-btn:hover { border-color: #333; color: var(--text); }
+    .icon-btn.copied { color: #6aae8c; border-color: #2a5a3a; }
+
+    .pptx-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: #2a2a2a;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.72rem;
+      padding: 7px 12px;
+      border-radius: 4px;
+      cursor: not-allowed;
+    }
+
+    /* Rec blocks */
+    .rec-block {
+      background: var(--prompt-bg);
+      border: 1px solid var(--prompt-border);
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+
+    .rec-block h3 {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.68rem;
+      color: #6a8cae;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .rec-block p {
+      font-size: 0.88rem;
+      color: #b0c4de;
+      line-height: 1.6;
+    }
+
+    /* Section tree */
+    .tree-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .section-tree {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 20px;
+    }
+
+    .section-item {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .section-header-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 13px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.1s;
+    }
+
+    .section-header-row:hover { background: #161616; }
+
+    .section-toggle {
+      color: var(--muted);
+      font-size: 0.62rem;
+      width: 12px;
+      transition: transform 0.15s;
+      flex-shrink: 0;
+    }
+
+    .section-item.open .section-toggle { transform: rotate(90deg); }
+
+    .section-roman {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.68rem;
+      color: var(--muted);
+      min-width: 30px;
+    }
+
+    .section-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .slide-count-badge {
+      background: #1a1a1a;
+      border: 1px solid #222;
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.65rem;
+      color: #444;
+      flex-shrink: 0;
+    }
+
+    .section-body {
+      display: none;
+      padding: 0 13px 12px;
+      border-top: 1px solid #161616;
+      background: #0c0c0c;
+    }
+
+    .section-item.open .section-body { display: block; }
+
+    .framework-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 9px 0 8px;
+    }
+
+    .fw-tag {
+      background: #0a1520;
+      border: 1px solid #1a2a3a;
+      color: #5a8aae;
+      border-radius: 3px;
+      padding: 2px 7px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.65rem;
+    }
+
+    .slide-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slide-item {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 5px 0;
+      border-bottom: 1px solid #141414;
+    }
+
+    .slide-item:last-child { border-bottom: none; }
+
+    .slide-num {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.65rem;
+      color: #2a2a2a;
+      min-width: 22px;
+      flex-shrink: 0;
+    }
+
+    .slide-title {
+      font-size: 0.82rem;
+      color: #aaa;
+      flex: 1;
+      line-height: 1.4;
+    }
+
+    .archetype-tag {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.6rem;
+      color: #383838;
+      background: #141414;
+      border: 1px solid #1a1a1a;
+      border-radius: 2px;
+      padding: 1px 5px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Frameworks explanation */
+    .fw-explanation {
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 18px;
+    }
+
+    .fw-explanation h3 {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .fw-explanation p {
+      font-size: 0.87rem;
+      color: #888;
+      line-height: 1.8;
+    }
+
+    @media (max-width: 520px) {
+      .form-row { grid-template-columns: 1fr; }
+      .deck-preview-header { flex-direction: column; }
+      .deck-actions { width: 100%; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Arthakram Research</h1>
-      <p>Paste your problem statement. Get research that wins.</p>
+      <h1>Arthakram</h1>
+      <p>First-principles research + deck generator for case competitions.</p>
     </header>
 
+    <!-- Step indicator -->
+    <div class="step-indicator">
+      <div class="step active" id="step1">
+        <div class="step-num">1</div>
+        <span class="step-label">Research</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step" id="step2">
+        <div class="step-num">2</div>
+        <span class="step-label">Deck Prep</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step" id="step3">
+        <div class="step-num">3</div>
+        <span class="step-label">Blueprint</span>
+      </div>
+    </div>
+
+    <!-- Step 1: Research input -->
     <div class="input-card">
       <textarea
         id="problemInput"
@@ -306,20 +718,84 @@
         <button id="analyzeBtn" onclick="analyze()">Analyse</button>
         <button id="pdfBtn" disabled title="Coming soon">Upload PDF — Coming Soon</button>
         <div class="loader" id="loader">
-          <div class="dots">
-            <span></span><span></span><span></span>
-          </div>
+          <div class="dots"><span></span><span></span><span></span></div>
           Analysing...
         </div>
       </div>
     </div>
 
+    <!-- Research output -->
     <div id="output"></div>
+
+    <!-- Step 2: Deck prep -->
+    <div class="deck-prep-card" id="deckPrepCard">
+      <div class="section-heading">
+        <h2>Generate Deck Structure</h2>
+        <p>Specify case parameters to get an 8-section deck blueprint with slide archetypes and framework recommendations.</p>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Case Type</label>
+          <select id="caseTypeSelect">
+            <option value="strategy">Strategy / Market Entry</option>
+            <option value="mna_finance">M&amp;A / Finance</option>
+            <option value="marketing">Marketing / GTM</option>
+            <option value="social_impact">Social Impact / NGO</option>
+            <option value="policy_trade_ir">Policy / Trade / IR</option>
+            <option value="operations">Operations / Supply Chain</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Audience</label>
+          <select id="audienceSelect">
+            <option value="Competition Judges">Competition Judges</option>
+            <option value="Board / C-Suite">Board / C-Suite</option>
+            <option value="CMO">CMO</option>
+            <option value="Government / Policy Maker">Government / Policy Maker</option>
+            <option value="Foundation / NGO">Foundation / NGO</option>
+            <option value="Investment Committee">Investment Committee</option>
+            <option value="Operations Team">Operations Team</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-single">
+        <div class="form-field" style="max-width:180px;">
+          <label>Deck Length (slides)</label>
+          <input type="number" class="form-input" id="deckLengthInput" value="100" min="20" max="200" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="deckBtn" onclick="prepareDeck()">Generate Deck Structure</button>
+        <div class="loader" id="deckLoader">
+          <div class="dots"><span></span><span></span><span></span></div>
+          Generating...
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Deck preview -->
+    <div class="deck-preview-card" id="deckPreviewCard">
+      <div class="deck-preview-header">
+        <div class="deck-meta">
+          <h2>Deck Blueprint</h2>
+          <div id="deckMetaTags"></div>
+        </div>
+        <div class="deck-actions">
+          <button class="icon-btn" id="copyJsonBtn" onclick="copyDeckJSON()">Copy JSON</button>
+          <button class="pptx-btn" disabled title="Coming in Phase 3">Download PPTX</button>
+        </div>
+      </div>
+      <div id="deckPreviewContent"></div>
+    </div>
   </div>
 
   <script>
     marked.setOptions({ breaks: true, gfm: true });
 
+    let currentResearchBrief = '';
+    let currentDeckStructure = null;
+
+    /* ── Phase 1: Research ───────────────────────────── */
     async function analyze() {
       const input = document.getElementById('problemInput');
       const btn = document.getElementById('analyzeBtn');
@@ -329,13 +805,18 @@
       const problem = input.value.trim();
       if (!problem) return;
 
-      // Loading state
       btn.disabled = true;
       btn.textContent = 'Analysing...';
       input.disabled = true;
       loader.classList.add('active');
       output.style.display = 'none';
       output.innerHTML = '';
+
+      // Reset downstream steps
+      document.getElementById('deckPrepCard').classList.remove('visible');
+      document.getElementById('deckPreviewCard').classList.remove('visible');
+      document.getElementById('step2').classList.remove('active', 'completed');
+      document.getElementById('step3').classList.remove('active', 'completed');
 
       try {
         const res = await fetch('/analyze', {
@@ -359,6 +840,10 @@
         injectPerplexityFormatting();
         injectCopyButton();
 
+        // Store brief + advance to step 2
+        currentResearchBrief = data.result;
+        showStep2();
+
       } catch (err) {
         output.innerHTML = `<div class="error-box">Network error: ${err.message}</div>`;
         output.style.display = 'block';
@@ -374,10 +859,8 @@
       const content = document.getElementById('resultContent');
       if (!content) return;
 
-      const headings = content.querySelectorAll('h2');
-      headings.forEach(h2 => {
+      content.querySelectorAll('h2').forEach(h2 => {
         if (h2.textContent.toLowerCase().includes('perplexity prompt')) {
-          // Wrap everything between this h2 and the next h2 in a perplexity-section div
           const wrapper = document.createElement('div');
           wrapper.className = 'perplexity-section';
           wrapper.id = 'perplexitySection';
@@ -419,10 +902,182 @@
       section.appendChild(btn);
     }
 
-    // Allow Ctrl+Enter / Cmd+Enter to submit
     document.getElementById('problemInput').addEventListener('keydown', e => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') analyze();
     });
+
+    /* ── Step 2: Show deck prep ──────────────────────── */
+    function showStep2() {
+      document.getElementById('step1').classList.add('completed');
+      document.getElementById('step1').classList.remove('active');
+      document.getElementById('step2').classList.add('active');
+
+      const card = document.getElementById('deckPrepCard');
+      card.classList.add('visible');
+      setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+    }
+
+    /* ── Phase 2: Deck generation ────────────────────── */
+    async function prepareDeck() {
+      const caseType = document.getElementById('caseTypeSelect').value;
+      const audience = document.getElementById('audienceSelect').value;
+      const deckLength = parseInt(document.getElementById('deckLengthInput').value) || 100;
+      const btn = document.getElementById('deckBtn');
+      const loader = document.getElementById('deckLoader');
+
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      loader.classList.add('active');
+      document.getElementById('deckPreviewCard').classList.remove('visible');
+
+      try {
+        const res = await fetch('/prepare-deck', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            research_brief: currentResearchBrief,
+            case_type: caseType,
+            audience,
+            deck_length: deckLength,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          alert(`Error: ${data.error || 'Unknown error'}`);
+          return;
+        }
+
+        currentDeckStructure = data.deck_structure;
+
+        document.getElementById('step2').classList.remove('active');
+        document.getElementById('step2').classList.add('completed');
+        document.getElementById('step3').classList.add('active');
+
+        renderDeckPreview(data.deck_structure);
+        const previewCard = document.getElementById('deckPreviewCard');
+        previewCard.classList.add('visible');
+        setTimeout(() => previewCard.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+
+      } catch (err) {
+        alert(`Network error: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate Deck Structure';
+        loader.classList.remove('active');
+      }
+    }
+
+    /* ── Render deck preview ─────────────────────────── */
+    function renderDeckPreview(deck) {
+      // Meta tags
+      document.getElementById('deckMetaTags').innerHTML = `
+        <div class="deck-tags">
+          <span class="deck-tag">${esc(deck.case_type_label)}</span>
+          <span class="deck-tag">${esc(deck.audience)}</span>
+          <span class="deck-tag">${deck.total_slides} slides</span>
+        </div>`;
+
+      // Recommendation blocks
+      let html = '';
+      if (deck.recommendation) {
+        html += recBlock('Recommendation', deck.recommendation);
+      }
+      if (deck.contrarian_alternative) {
+        html += recBlock('Contrarian Alternative', deck.contrarian_alternative);
+      }
+      if (deck.moneyshot) {
+        html += recBlock('Moneyshot', deck.moneyshot);
+      }
+
+      // Tree controls
+      html += `<div class="tree-controls">
+        <button class="icon-btn" onclick="openAllSections()" style="font-size:0.7rem;">Expand All</button>
+        <button class="icon-btn" onclick="closeAllSections()" style="font-size:0.7rem;">Collapse All</button>
+      </div>`;
+
+      // Section tree
+      html += '<div class="section-tree">';
+      deck.sections.forEach(section => {
+        const fwHtml = section.frameworks.length
+          ? `<div class="framework-tags">${section.frameworks.map(f => `<span class="fw-tag">${esc(f)}</span>`).join('')}</div>`
+          : '';
+
+        const slidesHtml = section.slides.map(slide => `
+          <div class="slide-item">
+            <span class="slide-num">${slide.slide_number}</span>
+            <span class="slide-title">${esc(slide.title)}</span>
+            <span class="archetype-tag">${esc(slide.archetype).replace(/_/g, ' ')}</span>
+          </div>`).join('');
+
+        html += `
+          <div class="section-item" id="section-${esc(section.id)}">
+            <div class="section-header-row" onclick="toggleSection('${esc(section.id)}')">
+              <span class="section-toggle">▶</span>
+              <span class="section-roman">${esc(section.roman)}</span>
+              <span class="section-name">${esc(section.title)}</span>
+              <span class="slide-count-badge">${section.slide_count} slides</span>
+            </div>
+            <div class="section-body">
+              ${fwHtml}
+              <div class="slide-list">${slidesHtml}</div>
+            </div>
+          </div>`;
+      });
+      html += '</div>';
+
+      // Frameworks explanation
+      if (deck.frameworks_explanation) {
+        html += `<div class="fw-explanation">
+          <h3>Framework Strategy</h3>
+          <p>${esc(deck.frameworks_explanation).replace(/\n/g, '<br>')}</p>
+        </div>`;
+      }
+
+      document.getElementById('deckPreviewContent').innerHTML = html;
+    }
+
+    function recBlock(label, text) {
+      return `<div class="rec-block">
+        <h3>${esc(label)}</h3>
+        <p>${esc(text)}</p>
+      </div>`;
+    }
+
+    function toggleSection(id) {
+      document.getElementById(`section-${id}`)?.classList.toggle('open');
+    }
+
+    function openAllSections() {
+      document.querySelectorAll('.section-item').forEach(el => el.classList.add('open'));
+    }
+
+    function closeAllSections() {
+      document.querySelectorAll('.section-item').forEach(el => el.classList.remove('open'));
+    }
+
+    function copyDeckJSON() {
+      if (!currentDeckStructure) return;
+      const btn = document.getElementById('copyJsonBtn');
+      navigator.clipboard.writeText(JSON.stringify(currentDeckStructure, null, 2)).then(() => {
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy JSON';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    function esc(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
   </script>
 </body>
 </html>
