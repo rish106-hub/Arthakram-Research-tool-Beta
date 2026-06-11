@@ -867,7 +867,6 @@
       padding: 36px;
     }
 
-    /* Markdown styles */
     .result-content h2 {
       font-family: 'Fira Code', monospace;
       font-size: 0.72rem;
@@ -1483,7 +1482,6 @@
         return;
       }
 
-      // Loading state
       btn.disabled = true;
       btn.innerHTML = '<span>⏳</span> Analysing...';
       input.disabled = true;
@@ -1558,8 +1556,7 @@
       const content = document.getElementById('resultContent');
       if (!content) return;
 
-      const headings = content.querySelectorAll('h2');
-      headings.forEach(h2 => {
+      content.querySelectorAll('h2').forEach(h2 => {
         if (h2.textContent.toLowerCase().includes('perplexity prompt')) {
           const wrapper = document.createElement('div');
           wrapper.className = 'perplexity-section';

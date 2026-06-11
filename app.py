@@ -2,7 +2,12 @@ import os
 import json
 from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
+from google.genai import types
+from deck_templates import (
+    FRAMEWORKS_BY_CASE_TYPE, SECTION_BLUEPRINT, SLIDE_ARCHETYPE_DESCRIPTIONS,
+    MONEYSHOT_BY_CASE_TYPE, CASE_TYPE_LABELS,
+)
 
 load_dotenv()
 
@@ -177,7 +182,27 @@ State each hypothesis as: "We believe [claim] because [first principles reasonin
 ## Working Hypotheses"""
 
 
-def get_gemini_model():
+DECK_GENERATION_PROMPT = """You are a case competition deck architect trained on winning decks from top international case competitions.
+
+Given the research brief and case parameters below, output the deck's strategic content as JSON.
+
+You must identify:
+1. RECOMMENDATION — what this deck recommends (specific, not generic)
+2. CONTRARIAN ALTERNATIVE — the less-obvious answer (not the default implied by the case prompt)
+3. FORESHADOWING SEED — one sentence to plant in Context section (30+ slides before naming the alternative)
+4. MONEYSHOT — the single dramatic number/visual that is the deck's analytical climax
+5. ACTION TITLES for key slides in each section (declarative sentences with numbers)
+6. FRAMEWORKS EXPLANATION — which frameworks to use and why, layered for this specific case
+
+RULES:
+- All action titles must be declarative findings, not topic labels
+  BAD: "Customer Demographics" | GOOD: "Urban Gen Z spends 4.3x more per visit than suburban customers"
+- The contrarian alternative must differ meaningfully from the default answer implied by the case prompt
+- frameworks_explanation must name specific frameworks and explain the layering logic for this specific case
+- Include numbers wherever possible in titles and findings"""
+
+
+def get_gemini_client():
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("GEMINI_API_KEY not set in environment")
@@ -207,12 +232,19 @@ def analyze():
     full_prompt = f"{SYSTEM_PROMPT}\n\n---\n\nPROBLEM STATEMENT: {problem}"
 
     try:
-        model = get_gemini_model()
+        client = get_gemini_client()
     except ValueError as e:
         return jsonify({"error": str(e)}), 500
 
     try:
-        response = model.generate_content(full_prompt)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=full_prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.3,
+                max_output_tokens=8192,
+            ),
+        )
         return jsonify({"result": response.text})
     except Exception as e:
         return jsonify({"error": f"Gemini API error: {str(e)}"}), 500
